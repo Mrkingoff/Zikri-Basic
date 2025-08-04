@@ -19,34 +19,21 @@ MainFrame.Active = true
 MainFrame.Draggable = true
 MainFrame.Parent = ScreenGui
 
-local Title = Instance.new("TextLabel")
+local Title = Instance.new("TextButton") -- Changed to TextButton for folding
 Title.Name = "Title"
-Title.Size = UDim2.new(0.8, 0, 1, 0)
+Title.Size = UDim2.new(1, 0, 0, 30)
 Title.Position = UDim2.new(0, 0, 0, 0)
 Title.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-Title.Text = "👾 ZIKRI MENU 👾"
+Title.Text = "👾 ZIKRI MENU 👾 (Click to unfold)"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.Font = Enum.Font.SciFi
 Title.TextSize = 18
-Title.TextXAlignment = Enum.TextXAlignment.Left
-Title.PaddingLeft = UDim.new(0, 10)
 Title.Parent = MainFrame
-
-local FoldButton = Instance.new("TextButton")
-FoldButton.Name = "FoldButton"
-FoldButton.Size = UDim2.new(0.2, 0, 1, 0)
-FoldButton.Position = UDim2.new(0.8, 0, 0, 0)
-FoldButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-FoldButton.Text = "+"
-FoldButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-FoldButton.Font = Enum.Font.SciFi
-FoldButton.TextSize = 20
-FoldButton.Parent = MainFrame
 
 local ScrollingFrame = Instance.new("ScrollingFrame")
 ScrollingFrame.Name = "ScrollingFrame"
-ScrollingFrame.Size = UDim2.new(1, -10, 0, 360)
-ScrollingFrame.Position = UDim2.new(0, 5, 0, 40)
+ScrollingFrame.Size = UDim2.new(1, -10, 1, -40)
+ScrollingFrame.Position = UDim2.new(0, 5, 0, 35)
 ScrollingFrame.BackgroundTransparency = 1
 ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 600)
 ScrollingFrame.ScrollBarThickness = 5
@@ -61,15 +48,15 @@ local function ToggleFold()
     if isUnfolded then
         MainFrame.Size = UDim2.new(0, 300, 0, 400)
         ScrollingFrame.Visible = true
-        FoldButton.Text = "-"
+        Title.Text = "👾 ZIKRI MENU 👾 (Click to fold)"
     else
         MainFrame.Size = UDim2.new(0, 300, 0, 40)
         ScrollingFrame.Visible = false
-        FoldButton.Text = "+"
+        Title.Text = "👾 ZIKRI MENU 👾 (Click to unfold)"
     end
 end
 
-FoldButton.MouseButton1Click:Connect(ToggleFold)
+Title.MouseButton1Click:Connect(ToggleFold)
 
 -- Button template
 local function CreateButton(text, yPosition)
