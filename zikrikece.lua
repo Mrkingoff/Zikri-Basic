@@ -21,7 +21,7 @@ ScreenGui.Name = "ZikriMenu"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = player:WaitForChild("PlayerGui")
 
--- Logo Button (Initial small logo)
+-- Logo Button (Only this is visible initially)
 local LogoButton = Instance.new("ImageButton")
 LogoButton.Name = "LogoButton"
 LogoButton.Size = UDim2.new(0, 100, 0, 100)
@@ -40,7 +40,7 @@ MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
 MainFrame.Draggable = true
-MainFrame.Visible = false
+MainFrame.Visible = false -- Menu starts hidden
 MainFrame.Parent = ScreenGui
 
 -- Title Bar
@@ -137,14 +137,16 @@ UserInputService.InputChanged:Connect(function(input)
     end
 end)
 
--- Logo click to show/hide menu
-LogoButton.MouseButton1Click:Connect(function()
-    MainFrame.Visible = not MainFrame.Visible
-end)
-
 -- Menu toggle functionality
 local isExpanded = false
 local targetHeight = 0
+
+-- Logo click to show/hide menu
+LogoButton.MouseButton1Click:Connect(function()
+    MainFrame.Visible = not MainFrame.Visible
+    isExpanded = MainFrame.Visible
+    targetHeight = isExpanded and math.min(UIListLayout.AbsoluteContentSize.Y, 300) or 0
+end)
 
 RunService.Heartbeat:Connect(function()
     local currentHeight = ContentFrame.Size.Y.Offset
@@ -159,6 +161,8 @@ end)
 -- Close button functionality
 CloseButton.MouseButton1Click:Connect(function()
     MainFrame.Visible = false
+    isExpanded = false
+    targetHeight = 0
 end)
 
 -- Feature variables
@@ -347,7 +351,9 @@ end)
 
 -- Update content frame height when buttons are added
 UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-    targetHeight = math.min(UIListLayout.AbsoluteContentSize.Y, 300)
+    if isExpanded then
+        targetHeight = math.min(UIListLayout.AbsoluteContentSize.Y, 300)
+    end
 end)
 
 -- Make sure menu persists after death
