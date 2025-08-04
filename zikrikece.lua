@@ -3,167 +3,195 @@ local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 
--- Player variables
+-- Player setup
 local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
+local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+player.CharacterAdded:Connect(function(newChar)
+    character = newChar
+    humanoid = character:WaitForChild("Humanoid")
+    humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+end)
 
 -- GUI Creation
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "ZikriMenu"
-ScreenGui.Parent = player.PlayerGui
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = player:WaitForChild("PlayerGui")
 
--- Main Frame
+-- Logo Button (Initial small logo)
+local LogoButton = Instance.new("ImageButton")
+LogoButton.Name = "LogoButton"
+LogoButton.Size = UDim2.new(0, 100, 0, 100)
+LogoButton.Position = UDim2.new(0.5, -50, 0.5, -50)
+LogoButton.AnchorPoint = Vector2.new(0.5, 0.5)
+LogoButton.BackgroundTransparency = 1
+LogoButton.Image = "rbxassetid://123456789" -- Replace with your logo image ID
+LogoButton.Parent = ScreenGui
+
+-- Main Frame (Hidden initially)
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 300, 0, 400)
-MainFrame.Position = UDim2.new(0.5, -150, 0.5, -200)
-MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-MainFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+MainFrame.Size = UDim2.new(0, 300, 0, 40)
+MainFrame.Position = UDim2.new(0.5, -150, 0, 10)
+MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 MainFrame.BorderSizePixel = 0
-MainFrame.ClipsDescendants = true
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Visible = false
 MainFrame.Parent = ScreenGui
 
 -- Title Bar
-local TitleBar = Instance.new("Frame")
-TitleBar.Name = "TitleBar"
-TitleBar.Size = UDim2.new(1, 0, 0, 30)
-TitleBar.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-TitleBar.BorderSizePixel = 0
-TitleBar.Parent = MainFrame
-
--- Logo/Title Text
-local TitleText = Instance.new("TextLabel")
-TitleText.Name = "TitleText"
-TitleText.Size = UDim2.new(1, -60, 1, 0)
-TitleText.Position = UDim2.new(0, 10, 0, 0)
-TitleText.BackgroundTransparency = 1
-TitleText.Text = "☄️😎 ZIKRI MENU 😎☄️"
-TitleText.TextColor3 = Color3.fromRGB(255, 255, 255)
-TitleText.TextXAlignment = Enum.TextXAlignment.Left
-TitleText.Font = Enum.Font.GothamBold
-TitleText.TextSize = 14
-TitleText.Parent = TitleBar
+local Title = Instance.new("TextLabel")
+Title.Name = "Title"
+Title.Size = UDim2.new(1, 0, 0, 40)
+Title.Position = UDim2.new(0, 0, 0, 0)
+Title.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+Title.BorderSizePixel = 0
+Title.Text = "ZIKRI MENU ☄️😎"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextSize = 20
+Title.Font = Enum.Font.SourceSansBold
+Title.Parent = MainFrame
 
 -- Close Button
 local CloseButton = Instance.new("TextButton")
 CloseButton.Name = "CloseButton"
-CloseButton.Size = UDim2.new(0, 30, 1, 0)
-CloseButton.Position = UDim2.new(1, -30, 0, 0)
-CloseButton.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+CloseButton.Size = UDim2.new(0, 40, 0, 40)
+CloseButton.Position = UDim2.new(1, -40, 0, 0)
+CloseButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 CloseButton.BorderSizePixel = 0
-CloseButton.Text = "X"
+CloseButton.Text = "×"
 CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-CloseButton.Font = Enum.Font.GothamBold
-CloseButton.TextSize = 14
-CloseButton.Parent = TitleBar
+CloseButton.TextSize = 20
+CloseButton.Parent = MainFrame
 
--- Scrolling Frame
-local ScrollFrame = Instance.new("ScrollingFrame")
-ScrollFrame.Name = "ScrollFrame"
-ScrollFrame.Size = UDim2.new(1, 0, 1, -30)
-ScrollFrame.Position = UDim2.new(0, 0, 0, 30)
-ScrollFrame.BackgroundTransparency = 1
-ScrollFrame.ScrollBarThickness = 5
-ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 700)
-ScrollFrame.Parent = MainFrame
+-- Content Frame
+local ContentFrame = Instance.new("Frame")
+ContentFrame.Name = "ContentFrame"
+ContentFrame.Size = UDim2.new(1, 0, 0, 0)
+ContentFrame.Position = UDim2.new(0, 0, 0, 40)
+ContentFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+ContentFrame.BorderSizePixel = 0
+ContentFrame.ClipsDescendants = true
+ContentFrame.Parent = MainFrame
 
 -- UIListLayout for buttons
 local UIListLayout = Instance.new("UIListLayout")
 UIListLayout.Padding = UDim.new(0, 5)
-UIListLayout.Parent = ScrollFrame
+UIListLayout.Parent = ContentFrame
 
--- Make the GUI draggable
-local dragging
-local dragInput
-local dragStart
-local startPos
+-- Make the Logo draggable
+local logoDragging
+local logoDragInput
+local logoDragStart
+local logoStartPos
 
-local function updateInput(input)
-    local delta = input.Position - dragStart
-    MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+local function updateLogoPosition(input)
+    local delta = input.Position - logoDragStart
+    LogoButton.Position = UDim2.new(logoStartPos.X.Scale, logoStartPos.X.Offset + delta.X, logoStartPos.Y.Scale, logoStartPos.Y.Offset + delta.Y)
     
-    -- Keep the GUI within screen bounds
+    -- Keep the logo within screen bounds
     local viewportSize = workspace.CurrentCamera.ViewportSize
-    local frameSize = MainFrame.AbsoluteSize
-    local position = MainFrame.AbsolutePosition
+    local logoSize = LogoButton.AbsoluteSize
+    local position = LogoButton.AbsolutePosition
     
     if position.X < 0 then
-        MainFrame.Position = UDim2.new(0, 0, MainFrame.Position.Y.Scale, MainFrame.Position.Y.Offset)
-    elseif position.X + frameSize.X > viewportSize.X then
-        MainFrame.Position = UDim2.new(0, viewportSize.X - frameSize.X, MainFrame.Position.Y.Scale, MainFrame.Position.Y.Offset)
+        LogoButton.Position = UDim2.new(0, 0, LogoButton.Position.Y.Scale, LogoButton.Position.Y.Offset)
+    elseif position.X + logoSize.X > viewportSize.X then
+        LogoButton.Position = UDim2.new(0, viewportSize.X - logoSize.X, LogoButton.Position.Y.Scale, LogoButton.Position.Y.Offset)
     end
     
     if position.Y < 0 then
-        MainFrame.Position = UDim2.new(MainFrame.Position.X.Scale, MainFrame.Position.X.Offset, 0, 0)
-    elseif position.Y + frameSize.Y > viewportSize.Y then
-        MainFrame.Position = UDim2.new(MainFrame.Position.X.Scale, MainFrame.Position.X.Offset, 0, viewportSize.Y - frameSize.Y)
+        LogoButton.Position = UDim2.new(LogoButton.Position.X.Scale, LogoButton.Position.X.Offset, 0, 0)
+    elseif position.Y + logoSize.Y > viewportSize.Y then
+        LogoButton.Position = UDim2.new(LogoButton.Position.X.Scale, LogoButton.Position.X.Offset, 0, viewportSize.Y - logoSize.Y)
     end
 end
 
-TitleBar.InputBegan:Connect(function(input)
+LogoButton.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = true
-        dragStart = input.Position
-        startPos = MainFrame.Position
+        logoDragging = true
+        logoDragStart = input.Position
+        logoStartPos = LogoButton.Position
         
         input.Changed:Connect(function()
             if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
+                logoDragging = false
             end
         end)
     end
 end)
 
-TitleBar.InputChanged:Connect(function(input)
+LogoButton.InputChanged:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseMovement then
-        dragInput = input
+        logoDragInput = input
     end
 end)
 
 UserInputService.InputChanged:Connect(function(input)
-    if input == dragInput and dragging then
-        updateInput(input)
+    if input == logoDragInput and logoDragging then
+        updateLogoPosition(input)
+    end
+end)
+
+-- Logo click to show/hide menu
+LogoButton.MouseButton1Click:Connect(function()
+    MainFrame.Visible = not MainFrame.Visible
+end)
+
+-- Menu toggle functionality
+local isExpanded = false
+local targetHeight = 0
+
+RunService.Heartbeat:Connect(function()
+    local currentHeight = ContentFrame.Size.Y.Offset
+    local newHeight = currentHeight + (targetHeight - currentHeight) * 0.2
+    ContentFrame.Size = UDim2.new(1, 0, 0, newHeight)
+    
+    if math.abs(newHeight - targetHeight) < 1 then
+        ContentFrame.Size = UDim2.new(1, 0, 0, targetHeight)
     end
 end)
 
 -- Close button functionality
 CloseButton.MouseButton1Click:Connect(function()
-    ScreenGui:Destroy()
+    MainFrame.Visible = false
 end)
 
--- Button creation function
-local function CreateButton(text)
-    local button = Instance.new("TextButton")
-    button.Name = text
-    button.Size = UDim2.new(1, -20, 0, 40)
-    button.Position = UDim2.new(0, 10, 0, 0)
-    button.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-    button.BorderSizePixel = 0
-    button.Text = text
-    button.TextColor3 = Color3.fromRGB(255, 255, 255)
-    button.Font = Enum.Font.Gotham
-    button.TextSize = 14
-    button.AutoButtonColor = true
-    button.Parent = ScrollFrame
-    
-    return button
-end
-
--- Variables for features
+-- Feature variables
 local antiKillEnabled = false
 local floatEnabled = false
 local noClipEnabled = false
 local antiRagdollEnabled = false
 local permadeathEnabled = false
 
+-- Create buttons for each feature
+local function CreateButton(text)
+    local button = Instance.new("TextButton")
+    button.Name = text .. "Button"
+    button.Size = UDim2.new(1, -20, 0, 40)
+    button.Position = UDim2.new(0, 10, 0, 0)
+    button.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    button.BorderSizePixel = 0
+    button.Text = text
+    button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    button.TextSize = 16
+    button.Font = Enum.Font.SourceSans
+    button.Parent = ContentFrame
+    
+    return button
+end
+
 -- Anti-Kill Part Button
 local antiKillButton = CreateButton("ANTI KILL PART 😂 OFF")
 antiKillButton.MouseButton1Click:Connect(function()
     antiKillEnabled = not antiKillEnabled
+    antiKillButton.Text = "ANTI KILL PART 😂 " .. (antiKillEnabled and "ON" or "OFF")
     
     if antiKillEnabled then
-        antiKillButton.Text = "ANTI KILL PART 😂 ON"
         player.CharacterAdded:Connect(function(char)
             char:WaitForChild("Humanoid").Touched:Connect(function(part)
                 if part:IsA("BasePart") and part.Name:lower():find("kill") then
@@ -171,8 +199,6 @@ antiKillButton.MouseButton1Click:Connect(function()
                 end
             end)
         end)
-    else
-        antiKillButton.Text = "ANTI KILL PART 😂 OFF"
     end
 end)
 
@@ -189,13 +215,12 @@ end)
 local permadeathButton = CreateButton("PERMADEATH 👻 OFF")
 permadeathButton.MouseButton1Click:Connect(function()
     permadeathEnabled = not permadeathEnabled
+    permadeathButton.Text = "PERMADEATH 👻 " .. (permadeathEnabled and "ON" or "OFF")
     
     if permadeathEnabled then
-        permadeathButton.Text = "PERMADEATH 👻 ON"
         player.CharacterAdded:Connect(function(char)
             local humanoid = char:WaitForChild("Humanoid")
             humanoid.Died:Connect(function()
-                -- Simulate walking by moving limbs
                 for _, part in pairs(char:GetDescendants()) do
                     if part:IsA("BasePart") then
                         local bodyVelocity = Instance.new("BodyVelocity")
@@ -206,8 +231,6 @@ permadeathButton.MouseButton1Click:Connect(function()
                 end
             end)
         end)
-    else
-        permadeathButton.Text = "PERMADEATH 👻 OFF"
     end
 end)
 
@@ -215,10 +238,9 @@ end)
 local floatButton = CreateButton("FLOAT 👾 OFF")
 floatButton.MouseButton1Click:Connect(function()
     floatEnabled = not floatEnabled
+    floatButton.Text = "FLOAT 👾 " .. (floatEnabled and "ON" or "OFF")
     
     if floatEnabled then
-        floatButton.Text = "FLOAT 👾 ON"
-        
         local rootPart = character:WaitForChild("HumanoidRootPart")
         local bodyVelocity = Instance.new("BodyVelocity")
         bodyVelocity.Velocity = Vector3.new(0, 0, 0)
@@ -239,7 +261,6 @@ floatButton.MouseButton1Click:Connect(function()
             end
         end)
     else
-        floatButton.Text = "FLOAT 👾 OFF"
         local rootPart = character:FindFirstChild("HumanoidRootPart")
         if rootPart then
             local bodyVelocity = rootPart:FindFirstChildWhichIsA("BodyVelocity")
@@ -254,16 +275,15 @@ end)
 local antiRagdollButton = CreateButton("ANTIRAGDOLL OFF")
 antiRagdollButton.MouseButton1Click:Connect(function()
     antiRagdollEnabled = not antiRagdollEnabled
+    antiRagdollButton.Text = "ANTIRAGDOLL " .. (antiRagdollEnabled and "ON" or "OFF")
     
     if antiRagdollEnabled then
-        antiRagdollButton.Text = "ANTIRAGDOLL ON"
         player.CharacterAdded:Connect(function(char)
             local humanoid = char:WaitForChild("Humanoid")
             humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
             humanoid:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
         end)
     else
-        antiRagdollButton.Text = "ANTIRAGDOLL OFF"
         player.CharacterAdded:Connect(function(char)
             local humanoid = char:WaitForChild("Humanoid")
             humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, true)
@@ -276,28 +296,18 @@ end)
 local noClipButton = CreateButton("NOCLIP OFF")
 noClipButton.MouseButton1Click:Connect(function()
     noClipEnabled = not noClipEnabled
+    noClipButton.Text = "NOCLIP " .. (noClipEnabled and "ON" or "OFF")
     
     if noClipEnabled then
-        noClipButton.Text = "NOCLIP ON"
-        
-        local function noclip()
-            if noClipEnabled and character then
-                for _, part in pairs(character:GetDescendants()) do
-                    if part:IsA("BasePart") then
-                        part.CanCollide = false
-                    end
-                end
+        for _, part in pairs(character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = false
             end
         end
-        
-        RunService.Stepped:Connect(noclip)
     else
-        noClipButton.Text = "NOCLIP OFF"
-        if character then
-            for _, part in pairs(character:GetDescendants()) do
-                if part:IsA("BasePart") then
-                    part.CanCollide = true
-                end
+        for _, part in pairs(character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = true
             end
         end
     end
@@ -317,7 +327,6 @@ spawnBlocksButton.MouseButton1Click:Connect(function()
     block.BrickColor = BrickColor.new("Bright blue")
     block.Parent = workspace
     
-    -- Make sure it doesn't stick to other parts
     block.Touched:Connect(function(otherPart)
         if otherPart ~= rootPart and not otherPart:IsDescendantOf(character) then
             block:Destroy()
@@ -325,36 +334,25 @@ spawnBlocksButton.MouseButton1Click:Connect(function()
     end)
 end)
 
--- Handle character respawns
-player.CharacterAdded:Connect(function(newChar)
-    character = newChar
-    humanoid = character:WaitForChild("Humanoid")
-    
-    -- Re-enable features if they were on
-    if floatEnabled then
-        floatButton.Text = "FLOAT 👾 ON"
-        local rootPart = character:WaitForChild("HumanoidRootPart")
-        local bodyVelocity = Instance.new("BodyVelocity")
-        bodyVelocity.Velocity = Vector3.new(0, 0, 0)
-        bodyVelocity.MaxForce = Vector3.new(0, 10000, 0)
-        bodyVelocity.Parent = rootPart
-    end
-    
-    if noClipEnabled then
-        noClipButton.Text = "NOCLIP ON"
-        RunService.Stepped:Connect(function()
-            if noClipEnabled and character then
-                for _, part in pairs(character:GetDescendants()) do
-                    if part:IsA("BasePart") then
-                        part.CanCollide = false
-                    end
-                end
+-- Continuous Noclip update
+RunService.Stepped:Connect(function()
+    if noClipEnabled and character then
+        for _, part in pairs(character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = false
             end
-        end)
+        end
     end
-    
-    if antiRagdollEnabled then
-        humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
-        humanoid:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
+end)
+
+-- Update content frame height when buttons are added
+UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    targetHeight = math.min(UIListLayout.AbsoluteContentSize.Y, 300)
+end)
+
+-- Make sure menu persists after death
+player.CharacterAdded:Connect(function()
+    if not ScreenGui.Parent then
+        ScreenGui.Parent = player:WaitForChild("PlayerGui")
     end
 end)
