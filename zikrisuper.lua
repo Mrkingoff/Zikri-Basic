@@ -1,14 +1,17 @@
--- ZIKRI MENU KECE ☄️ FULL UPDATE
+-- ZIKRI MENU KECE ☄️ FULL UPDATE + TELEKINESIS
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
+local Mouse = LocalPlayer:GetMouse()
 
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "ZikriMenu"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
+-- === LOGO DRAGGABLE ===
 local logo = Instance.new("TextButton")
 logo.Text = "😎"
 logo.Size = UDim2.new(0, 50, 0, 50)
@@ -16,9 +19,11 @@ logo.Position = UDim2.new(0, 10, 0, 10)
 logo.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
 logo.TextScaled = true
 logo.Parent = screenGui
+logo.Active = true
+logo.Draggable = true
 
 local menuFrame = Instance.new("Frame")
-menuFrame.Size = UDim2.new(0, 250, 0, 650)
+menuFrame.Size = UDim2.new(0, 250, 0, 680)
 menuFrame.Position = UDim2.new(0, 70, 0, 10)
 menuFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 menuFrame.Visible = false
@@ -53,7 +58,7 @@ closeBtn.Parent = menuFrame
 local scrollFrame = Instance.new("ScrollingFrame")
 scrollFrame.Size = UDim2.new(1, 0, 1, -40)
 scrollFrame.Position = UDim2.new(0, 0, 0, 40)
-scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 1250)
+scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 1400)
 scrollFrame.ScrollBarThickness = 8
 scrollFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 scrollFrame.Parent = menuFrame
@@ -177,12 +182,28 @@ createButton("Get All Tools", 360, function()
 	end
 end)
 
-createToggle("Deadboy", 410, function(state)
-	local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-	if hum and state then
+-- === PERMADEATH (R6) ===
+createToggle("Permadeath (R6)", 410, function(state)
+	local char = LocalPlayer.Character
+	if not char then return end
+	local hum = char:FindFirstChildOfClass("Humanoid")
+	local hrp = char:FindFirstChild("HumanoidRootPart")
+	if not hum or not hrp then return end
+
+	if state then
+		hum.BreakJointsOnDeath = false
+		hum.RequiresNeck = false
 		hum.Health = 0
 		task.wait(0.1)
-		LocalPlayer.Character.HumanoidRootPart.Anchored = false
+		hum:ChangeState(Enum.HumanoidStateType.Physics)
+		for _, part in pairs(char:GetDescendants()) do
+			if part:IsA("BasePart") then
+				part.Anchored = false
+				part.CanCollide = true
+			end
+		end
+	else
+		hum.Health = 100
 	end
 end)
 
@@ -240,11 +261,10 @@ createButton("Delete Tools All Player", 560, function()
 	end
 end)
 
--- Tombol Spawn Unanchored
+-- Spawn Unanchored
 createButton("Spawn Unanchored", 610, function()
 	local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
 	if not hrp then return end
-
 	for _, part in pairs(workspace:GetDescendants()) do
 		if part:IsA("BasePart") and not part.Anchored and part.CanCollide then
 			part.CFrame = hrp.CFrame * CFrame.new(0, 5, -5)
@@ -252,10 +272,38 @@ createButton("Spawn Unanchored", 610, function()
 	end
 end)
 
+-- === TELEKINESIS ===
+createToggle("Telekinesis", 660, function(state)
+	local selectedPart = nil
+	if state then
+		Mouse.Button1Down:Connect(function()
+			local target = Mouse.Target
+			if target and target:IsA("BasePart") and not target.Anchored then
+				selectedPart = target
+				selectedPart:SetNetworkOwner(LocalPlayer)
+			end
+		end)
+		RunService.RenderStepped:Connect(function()
+			if selectedPart then
+				selectedPart.CFrame = CFrame.new(Mouse.Hit.Position)
+			end
+		end)
+		UserInputService.InputBegan:Connect(function(input)
+			if input.KeyCode == Enum.KeyCode.Q and selectedPart then
+				selectedPart.AssemblyLinearVelocity = (Mouse.Hit.Position - selectedPart.Position).Unit * 150
+				selectedPart = nil
+			end
+		end)
+	else
+		selectedPart = nil
+	end
+end)
+
 logo.MouseButton1Click:Connect(function()
 	menuFrame.Visible = true
 	logo.Visible = false
 end)
+
 closeBtn.MouseButton1Click:Connect(function()
 	menuFrame.Visible = false
 	logo.Visible = true
