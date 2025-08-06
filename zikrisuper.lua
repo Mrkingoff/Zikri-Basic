@@ -1,9 +1,14 @@
--- ZIKRI MENU KECE ☄️ FULL UPDATE + MODEGHOST
+--[[
+	ZIKRI MENU KECE ☄️ FINAL BRUTAL EDITION
+	By: bro anakhebat 😎🔥
+	Executor: KRNL
+]]
+
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LocalPlayer = Players.LocalPlayer
-local Mouse = LocalPlayer:GetMouse()
+local UserInputService = game:GetService("UserInputService")
 
 -- Simpan posisi logo
 local logoPos = UDim2.new(0, 10, 0, 10)
@@ -24,15 +29,16 @@ logo.Parent = screenGui
 logo.Active = true
 logo.Draggable = true
 
--- Simpan posisi logo saat dilepas
+-- Simpan posisi logo saat digeser
 logo.Changed:Connect(function(prop)
 	if prop == "Position" then
 		logoPos = logo.Position
 	end
 end)
 
+-- === MENU ===
 local menuFrame = Instance.new("Frame")
-menuFrame.Size = UDim2.new(0, 250, 0, 720)
+menuFrame.Size = UDim2.new(0, 250, 0, 760)
 menuFrame.Position = UDim2.new(0, 70, 0, 10)
 menuFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 menuFrame.Visible = false
@@ -47,6 +53,7 @@ title.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 title.TextScaled = true
 title.Parent = menuFrame
 
+-- Rainbow title
 task.spawn(function()
 	while true do
 		for i = 0, 255 do
@@ -67,11 +74,12 @@ closeBtn.Parent = menuFrame
 local scrollFrame = Instance.new("ScrollingFrame")
 scrollFrame.Size = UDim2.new(1, 0, 1, -40)
 scrollFrame.Position = UDim2.new(0, 0, 0, 40)
-scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 1600)
+scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 1800)
 scrollFrame.ScrollBarThickness = 8
 scrollFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 scrollFrame.Parent = menuFrame
 
+-- Utility buat tombol
 local function createToggle(name, yPos, callback)
 	local btn = Instance.new("TextButton")
 	btn.Size = UDim2.new(1, -10, 0, 40)
@@ -106,13 +114,17 @@ local function createButton(name, yPos, callback)
 end
 
 -- === FITUR ===
-createToggle("Anti Kill Part", 10, function(state)
+-- Anti Kill Part Brutal
+createToggle("Anti Kill Part (Brutal)", 10, function(state)
 	if state then
 		RunService.Stepped:Connect(function()
 			for _, part in pairs(workspace:GetDescendants()) do
-				if part:IsA("BasePart") and part.CanTouch then
-					if string.find(string.lower(part.Name), "kill") or string.find(string.lower(part.Name), "lava") then
+				if part:IsA("BasePart") then
+					local nameLower = string.lower(part.Name)
+					if nameLower:find("kill") or nameLower:find("lava") or nameLower:find("touch") or nameLower:find("dead") then
 						part.CanTouch = false
+						part.CanCollide = false
+						part.Transparency = 1
 					end
 				end
 			end
@@ -120,7 +132,36 @@ createToggle("Anti Kill Part", 10, function(state)
 	end
 end)
 
-createToggle("Anti Kill NPC", 60, function(state)
+-- Attach Kill Part Brutal
+createButton("Attach Kill Part Brutal", 60, function()
+	local char = LocalPlayer.Character
+	if not char then return end
+	local hrp = char:FindFirstChild("HumanoidRootPart")
+	if not hrp then return end
+
+	for _, part in pairs(workspace:GetDescendants()) do
+		if part:IsA("BasePart") then
+			local nameLower = string.lower(part.Name)
+			if nameLower:find("kill") or nameLower:find("lava") or nameLower:find("touch") or nameLower:find("dead") then
+				local clone = part:Clone()
+				clone.Anchored = false
+				clone.CanCollide = false
+				clone.Transparency = 1
+				clone.Parent = char
+				local weld = Instance.new("WeldConstraint", clone)
+				weld.Part0 = clone
+				weld.Part1 = hrp
+				clone.CanTouch = true
+				local success = pcall(function()
+					clone:SetNetworkOwner(LocalPlayer)
+				end)
+			end
+		end
+	end
+end)
+
+-- Anti Kill NPC
+createToggle("Anti Kill NPC", 110, function(state)
 	if state then
 		local hum = LocalPlayer.Character:WaitForChild("Humanoid")
 		hum.HealthChanged:Connect(function(h)
@@ -129,7 +170,8 @@ createToggle("Anti Kill NPC", 60, function(state)
 	end
 end)
 
-createToggle("God Mode", 110, function(state)
+-- God Mode
+createToggle("God Mode", 160, function(state)
 	if state then
 		RunService.Stepped:Connect(function()
 			local hum = LocalPlayer.Character:FindFirstChild("Humanoid")
@@ -138,7 +180,8 @@ createToggle("God Mode", 110, function(state)
 	end
 end)
 
-createToggle("Noclip", 160, function(state)
+-- Noclip
+createToggle("Noclip", 210, function(state)
 	if state then
 		RunService.Stepped:Connect(function()
 			for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
@@ -148,7 +191,8 @@ createToggle("Noclip", 160, function(state)
 	end
 end)
 
-createToggle("Walkfling", 210, function(state)
+-- Walkfling
+createToggle("Walkfling", 260, function(state)
 	if state then
 		RunService.Heartbeat:Connect(function()
 			if not state then return end
@@ -166,23 +210,25 @@ createToggle("Walkfling", 210, function(state)
 	end
 end)
 
-local savedSpawn
-createButton("Save Spawn Point", 260, function()
+-- Save Spawn
+createButton("Save Spawn Point", 310, function()
 	local hrp = LocalPlayer.Character:WaitForChild("HumanoidRootPart")
-	savedSpawn = hrp.Position
+	_G.SavedSpawn = hrp.Position
 end)
 
-createButton("Respawn", 310, function()
+-- Respawn
+createButton("Respawn", 360, function()
 	local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
 	if hum then hum.Health = 0 end
-	if savedSpawn then
+	if _G.SavedSpawn then
 		LocalPlayer.CharacterAdded:Wait()
 		task.wait(1)
-		LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = CFrame.new(savedSpawn)
+		LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = CFrame.new(_G.SavedSpawn)
 	end
 end)
 
-createButton("Get All Tools", 360, function()
+-- Get All Tools
+createButton("Get All Tools", 410, function()
 	for _, tool in pairs(workspace:GetDescendants()) do
 		if tool:IsA("Tool") then tool.Parent = LocalPlayer.Backpack end
 	end
@@ -191,68 +237,36 @@ createButton("Get All Tools", 360, function()
 	end
 end)
 
-createToggle("Permadeath (R6)", 410, function(state)
-	local char = LocalPlayer.Character
-	if not char then return end
-	local hum = char:FindFirstChildOfClass("Humanoid")
-	local hrp = char:FindFirstChild("HumanoidRootPart")
-	if not hum or not hrp then return end
-
+-- ModeGhost Realistis
+createToggle("ModeGhost (Realistic)", 460, function(state)
 	if state then
-		hum.BreakJointsOnDeath = false
-		hum.RequiresNeck = false
-		hum.Health = 0
-		task.wait(0.1)
-		hum:ChangeState(Enum.HumanoidStateType.Physics)
-		for _, part in pairs(char:GetDescendants()) do
-			if part:IsA("BasePart") then
-				part.Anchored = false
-				part.CanCollide = true
-			end
-		end
-	else
-		hum.Health = 100
-	end
-end)
+		local char = LocalPlayer.Character
+		if not char then return end
+		local hrp = char:FindFirstChild("HumanoidRootPart")
+		if not hrp then return end
 
-createToggle("Invisible", 460, function(state)
-	local char = LocalPlayer.Character
-	if char and char:FindFirstChild("HumanoidRootPart") then
-		if state then
-			char:MoveTo(Vector3.new(9999, 9999, 9999))
-		else
-			char:MoveTo(workspace.SpawnLocation and workspace.SpawnLocation.Position or Vector3.new(0, 10, 0))
+		_G.GhostDummy = char:Clone()
+		for _, v in pairs(_G.GhostDummy:GetDescendants()) do
+			if v:IsA("Script") or v:IsA("LocalScript") then v:Destroy() end
 		end
-	end
-end)
-
--- === MODEGHOST ===
-createToggle("ModeGhost", 510, function(state)
-	local char = LocalPlayer.Character
-	if not char then return end
-
-	if state then
-		_G.GhostPos = char:FindFirstChild("HumanoidRootPart").CFrame
-		_G.Dummy = char:Clone()
-		_G.Dummy.Parent = workspace
-		for _, v in pairs(_G.Dummy:GetDescendants()) do
-			if v:IsA("Script") or v:IsA("LocalScript") then
-				v:Destroy()
-			end
-		end
+		_G.GhostDummy.Parent = workspace
+		LocalPlayer.Character = _G.GhostDummy
 		char:MoveTo(Vector3.new(99999, 99999, 99999))
 	else
-		if _G.GhostPos then
-			char:MoveTo(_G.GhostPos.Position)
-		end
-		if _G.Dummy then
-			_G.Dummy:Destroy()
-			_G.Dummy = nil
+		if _G.GhostDummy then
+			local pos = _G.GhostDummy:FindFirstChild("HumanoidRootPart") and _G.GhostDummy.HumanoidRootPart.Position
+			_G.GhostDummy:Destroy()
+			LocalPlayer.Character = LocalPlayer.CharacterAdded:Wait()
+			task.wait(0.2)
+			if pos then
+				LocalPlayer.Character:MoveTo(pos)
+			end
 		end
 	end
 end)
 
-createButton("Delete Tools All Player", 560, function()
+-- Delete Tools All Player
+createButton("Delete Tools All Player", 510, function()
 	for _, plr in pairs(Players:GetPlayers()) do
 		if plr.Backpack then
 			for _, tool in pairs(plr.Backpack:GetChildren()) do
@@ -267,7 +281,8 @@ createButton("Delete Tools All Player", 560, function()
 	end
 end)
 
-createButton("Spawn Unanchored", 610, function()
+-- Spawn Unanchored
+createButton("Spawn Unanchored", 560, function()
 	local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
 	if not hrp then return end
 	for _, part in pairs(workspace:GetDescendants()) do
@@ -277,12 +292,11 @@ createButton("Spawn Unanchored", 610, function()
 	end
 end)
 
--- Tombol buka/tutup menu
+-- Menu open/close
 logo.MouseButton1Click:Connect(function()
 	menuFrame.Visible = true
 	logo.Visible = false
 end)
-
 closeBtn.MouseButton1Click:Connect(function()
 	menuFrame.Visible = false
 	logo.Visible = true
