@@ -1,12 +1,10 @@
--- ZIKRI MENU KECE ☄️ FULL FINAL
+-- ZIKRI MENU KECE ☄️ NORMAL
 -- By Cees 😎☄️🔥
 
 -- Services
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
-local Mouse = LocalPlayer:GetMouse()
 
 -- ScreenGui utama
 local screenGui = Instance.new("ScreenGui")
@@ -27,7 +25,7 @@ logo.Draggable = true
 
 -- Frame Menu
 local menuFrame = Instance.new("Frame")
-menuFrame.Size = UDim2.new(0, 250, 0, 700)
+menuFrame.Size = UDim2.new(0, 250, 0, 600)
 menuFrame.Position = UDim2.new(0, 70, 0, 10)
 menuFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 menuFrame.Visible = false
@@ -66,7 +64,7 @@ closeBtn.Parent = menuFrame
 local scrollFrame = Instance.new("ScrollingFrame")
 scrollFrame.Size = UDim2.new(1, 0, 1, -40)
 scrollFrame.Position = UDim2.new(0, 0, 0, 40)
-scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 2000)
+scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 1500)
 scrollFrame.ScrollBarThickness = 8
 scrollFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 scrollFrame.Parent = menuFrame
@@ -124,346 +122,166 @@ titleOnOff.TextScaled = true
 titleOnOff.TextColor3 = Color3.fromRGB(255, 255, 255)
 titleOnOff.Parent = scrollFrame
 
+-- === FITUR ON/OFF ===
+createToggle("Anti Kill Part", 1, function(state)
+	if state then
+		RunService.Stepped:Connect(function()
+			for _, part in pairs(workspace:GetDescendants()) do
+				if part:IsA("BasePart") and part.Name:lower():find("kill") then
+					part.CanTouch = false
+				end
+			end
+		end)
+	else
+		for _, part in pairs(workspace:GetDescendants()) do
+			if part:IsA("BasePart") and part.Name:lower():find("kill") then
+				part.CanTouch = true
+			end
+		end
+	end
+end)
+
+createToggle("Anti Kill NPC", 2, function(state)
+	if state then
+		RunService.Stepped:Connect(function()
+			for _, npc in pairs(workspace:GetDescendants()) do
+				if npc:IsA("Humanoid") and npc ~= LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+					npc.Health = 0
+				end
+			end
+		end)
+	end
+end)
+
+createToggle("God Mode", 3, function(state)
+	local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+	if hum then
+		if state then
+			hum.MaxHealth = math.huge
+			hum.Health = math.huge
+		else
+			hum.MaxHealth = 100
+			hum.Health = 100
+		end
+	end
+end)
+
+createToggle("Noclip", 4, function(state)
+	if state then
+		RunService.Stepped:Connect(function()
+			for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
+				if v:IsA("BasePart") then
+					v.CanCollide = false
+				end
+			end
+		end)
+	else
+		for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
+			if v:IsA("BasePart") then
+				v.CanCollide = true
+			end
+		end
+	end
+end)
+
+createToggle("Walkfling", 5, function(state)
+	local hrp = LocalPlayer.Character:WaitForChild("HumanoidRootPart")
+	if state then
+		local fling = Instance.new("BodyAngularVelocity", hrp)
+		fling.AngularVelocity = Vector3.new(0, 999999, 0)
+		fling.MaxTorque = Vector3.new(0, math.huge, 0)
+	else
+		for _, v in pairs(hrp:GetChildren()) do
+			if v:IsA("BodyAngularVelocity") then v:Destroy() end
+		end
+	end
+end)
+
+local savedPos = nil
+createToggle("Save Spawn", 6, function(state)
+	if state then
+		savedPos = LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame
+		LocalPlayer.CharacterAdded:Connect(function(char)
+			task.wait(0.5)
+			if savedPos then
+				char:WaitForChild("HumanoidRootPart").CFrame = savedPos
+			end
+		end)
+	else
+		savedPos = nil
+	end
+end)
+
+createToggle("Invisible Ghost", 7, function(state)
+	if state then
+		local char = LocalPlayer.Character
+		if not char then return end
+		local clone = char:Clone()
+		for _, v in pairs(clone:GetDescendants()) do
+			if v:IsA("BasePart") then
+				v.Transparency = 1
+			end
+		end
+		clone.Parent = workspace
+		char:MoveTo(Vector3.new(0, 9999, 0))
+	else
+		LocalPlayer.Character:MoveTo(workspace:FindFirstChildWhichIsA("SpawnLocation").Position)
+	end
+end)
+
+createToggle("Permadeath (R6)", 8, function(state)
+	if state then
+		local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+		if hum then hum.Health = 0 end
+	end
+end)
+
 -- ====== TITLE 2: BUTTON 1X CLICK ======
 local titleClick = Instance.new("TextLabel")
 titleClick.Size = UDim2.new(1, 0, 0, 40)
-titleClick.Position = UDim2.new(0, 0, 0, 900)
+titleClick.Position = UDim2.new(0, 0, 0, 500)
 titleClick.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 titleClick.Text = "=== BUTTON 1X CLICK ==="
 titleClick.TextScaled = true
 titleClick.TextColor3 = Color3.fromRGB(255, 255, 255)
 titleClick.Parent = scrollFrame
--- === FITUR ON/OFF ===
 
--- Anti Kill Part
-createToggle("Anti Kill Part", 1, function(state)
-	if state then
-		RunService.Stepped:Connect(function()
-			for _, part in pairs(workspace:GetDescendants()) do
-				if part:IsA("BasePart") and part.Name:lower():find("kill") then
-					part.CanTouch = false
+-- === FITUR 1X CLICK ===
+createButton("Respawn", 20, function()
+	LocalPlayer.Character:BreakJoints()
+end)
+
+createButton("Get All Tools", 21, function()
+	for _, tool in ipairs(workspace:GetDescendants()) do
+		if tool:IsA("Tool") and tool.Parent ~= LocalPlayer.Backpack then
+			tool.Parent = LocalPlayer.Backpack
+		end
+	end
+end)
+
+createButton("Delete Tools All Player", 22, function()
+	for _, plr in ipairs(Players:GetPlayers()) do
+		if plr ~= LocalPlayer then
+			for _, tool in ipairs(plr.Backpack:GetChildren()) do
+				if tool:IsA("Tool") then
+					tool:Destroy()
 				end
 			end
-		end)
-	else
-		for _, part in pairs(workspace:GetDescendants()) do
-			if part:IsA("BasePart") and part.Name:lower():find("kill") then
-				part.CanTouch = true
-			end
-		end
-	end
-end)
-
--- Anti Kill NPC
-createToggle("Anti Kill NPC", 2, function(state)
-	if state then
-		RunService.Stepped:Connect(function()
-			for _, npc in pairs(workspace:GetDescendants()) do
-				if npc:IsA("Humanoid") and npc ~= LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
-					npc.Health = 0
+			if plr.Character then
+				for _, tool in ipairs(plr.Character:GetChildren()) do
+					if tool:IsA("Tool") then
+						tool:Destroy()
+					end
 				end
 			end
-		end)
-	end
-end)
-
--- God Mode
-createToggle("God Mode", 3, function(state)
-	if state then
-		local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-		if hum then
-			hum.MaxHealth = math.huge
-			hum.Health = math.huge
-		end
-	else
-		local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-		if hum then
-			hum.MaxHealth = 100
-			hum.Health = 100
 		end
 	end
 end)
 
--- Noclip
-createToggle("Noclip", 4, function(state)
-	if state then
-		RunService.Stepped:Connect(function()
-			for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
-				if v:IsA("BasePart") then
-					v.CanCollide = false
-				end
-			end
-		end)
-	else
-		for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
-			if v:IsA("BasePart") then
-				v.CanCollide = true
-			end
-		end
-	end
-end)
-
--- Walkfling (versi fix)
-createToggle("Walkfling", 5, function(state)
-	local char = LocalPlayer.Character
-	if state and char then
-		local hrp = char:WaitForChild("HumanoidRootPart")
-		local fling = Instance.new("BodyAngularVelocity", hrp)
-		fling.AngularVelocity = Vector3.new(0, 999999, 0)
-		fling.MaxTorque = Vector3.new(0, math.huge, 0)
-	else
-		for _, v in pairs(LocalPlayer.Character.HumanoidRootPart:GetChildren()) do
-			if v:IsA("BodyAngularVelocity") then v:Destroy() end
-		end
-	end
-end)
-
--- Save Spawn
-local savedPos = nil
-createToggle("Save Spawn", 6, function(state)
-	if state then
-		savedPos = LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame
-		LocalPlayer.CharacterAdded:Connect(function(char)
-			task.wait(0.5)
-			if savedPos then
-				char:WaitForChild("HumanoidRootPart").CFrame = savedPos
-			end
-		end)
-	else
-		savedPos = nil
-	end
-end)
-
--- Fly Mobile Simple
-createToggle("Fly (Mobile)", 7, function(state)
-	local char = LocalPlayer.Character
-	if not char then return end
-	local hrp = char:WaitForChild("HumanoidRootPart")
-	local hum = char:WaitForChild("Humanoid")
-	if state then
-		local bodyGyro = Instance.new("BodyGyro", hrp)
-		bodyGyro.MaxTorque = Vector3.new(1e9, 1e9, 1e9)
-		bodyGyro.P = 1e5
-
-		local bodyVel = Instance.new("BodyVelocity", hrp)
-		bodyVel.MaxForce = Vector3.new(1e9, 1e9, 1e9)
-		bodyVel.Velocity = Vector3.zero
-
-		hum.PlatformStand = true
-		local cam = workspace.CurrentCamera
-		local flySpeed = 50
-
-		RunService.RenderStepped:Connect(function()
-			if not state then return end
-			local moveDir = hum.MoveDirection
-			if moveDir.Magnitude > 0 then
-				local dir = cam.CFrame:VectorToWorldSpace(moveDir)
-				bodyVel.Velocity = dir.Unit * flySpeed
-			else
-				bodyVel.Velocity = Vector3.zero
-			end
-			bodyGyro.CFrame = cam.CFrame
-		end)
-	else
-		hum.PlatformStand = false
-		for _, v in ipairs(hrp:GetChildren()) do
-			if v:IsA("BodyGyro") or v:IsA("BodyVelocity") then v:Destroy() end
-		end
-	end
-end)
-
--- Invisible Ghost Mode
-createToggle("Invisible Ghost", 8, function(state)
-	if state then
-		local char = LocalPlayer.Character
-		if not char then return end
-		local clone = char:Clone()
-		for _, v in pairs(clone:GetDescendants()) do
-			if v:IsA("BasePart") then
-				v.Transparency = 1
-				v.Anchored = false
-			end
-		end
-		clone.Parent = workspace
-		char:MoveTo(Vector3.new(0, 9999, 0))
-	else
-		LocalPlayer.Character:MoveTo(workspace:FindFirstChildWhichIsA("SpawnLocation").Position)
-	end
-end)
-
--- Permadeath (R6)
-createToggle("Permadeath (R6)", 9, function(state)
-	if state then
-		local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-		if hum then
-			hum.Health = 0
-		end
-	end
-end)
--- === FITUR ON/OFF ===
-
--- Anti Kill Part
-createToggle("Anti Kill Part", 1, function(state)
-	if state then
-		RunService.Stepped:Connect(function()
-			for _, part in pairs(workspace:GetDescendants()) do
-				if part:IsA("BasePart") and part.Name:lower():find("kill") then
-					part.CanTouch = false
-				end
-			end
-		end)
-	else
-		for _, part in pairs(workspace:GetDescendants()) do
-			if part:IsA("BasePart") and part.Name:lower():find("kill") then
-				part.CanTouch = true
-			end
-		end
-	end
-end)
-
--- Anti Kill NPC
-createToggle("Anti Kill NPC", 2, function(state)
-	if state then
-		RunService.Stepped:Connect(function()
-			for _, npc in pairs(workspace:GetDescendants()) do
-				if npc:IsA("Humanoid") and npc ~= LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
-					npc.Health = 0
-				end
-			end
-		end)
-	end
-end)
-
--- God Mode
-createToggle("God Mode", 3, function(state)
-	if state then
-		local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-		if hum then
-			hum.MaxHealth = math.huge
-			hum.Health = math.huge
-		end
-	else
-		local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-		if hum then
-			hum.MaxHealth = 100
-			hum.Health = 100
-		end
-	end
-end)
-
--- Noclip
-createToggle("Noclip", 4, function(state)
-	if state then
-		RunService.Stepped:Connect(function()
-			for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
-				if v:IsA("BasePart") then
-					v.CanCollide = false
-				end
-			end
-		end)
-	else
-		for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
-			if v:IsA("BasePart") then
-				v.CanCollide = true
-			end
-		end
-	end
-end)
-
--- Walkfling (versi fix)
-createToggle("Walkfling", 5, function(state)
-	local char = LocalPlayer.Character
-	if state and char then
-		local hrp = char:WaitForChild("HumanoidRootPart")
-		local fling = Instance.new("BodyAngularVelocity", hrp)
-		fling.AngularVelocity = Vector3.new(0, 999999, 0)
-		fling.MaxTorque = Vector3.new(0, math.huge, 0)
-	else
-		for _, v in pairs(LocalPlayer.Character.HumanoidRootPart:GetChildren()) do
-			if v:IsA("BodyAngularVelocity") then v:Destroy() end
-		end
-	end
-end)
-
--- Save Spawn
-local savedPos = nil
-createToggle("Save Spawn", 6, function(state)
-	if state then
-		savedPos = LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame
-		LocalPlayer.CharacterAdded:Connect(function(char)
-			task.wait(0.5)
-			if savedPos then
-				char:WaitForChild("HumanoidRootPart").CFrame = savedPos
-			end
-		end)
-	else
-		savedPos = nil
-	end
-end)
-
--- Fly Mobile Simple
-createToggle("Fly (Mobile)", 7, function(state)
-	local char = LocalPlayer.Character
-	if not char then return end
-	local hrp = char:WaitForChild("HumanoidRootPart")
-	local hum = char:WaitForChild("Humanoid")
-	if state then
-		local bodyGyro = Instance.new("BodyGyro", hrp)
-		bodyGyro.MaxTorque = Vector3.new(1e9, 1e9, 1e9)
-		bodyGyro.P = 1e5
-
-		local bodyVel = Instance.new("BodyVelocity", hrp)
-		bodyVel.MaxForce = Vector3.new(1e9, 1e9, 1e9)
-		bodyVel.Velocity = Vector3.zero
-
-		hum.PlatformStand = true
-		local cam = workspace.CurrentCamera
-		local flySpeed = 50
-
-		RunService.RenderStepped:Connect(function()
-			if not state then return end
-			local moveDir = hum.MoveDirection
-			if moveDir.Magnitude > 0 then
-				local dir = cam.CFrame:VectorToWorldSpace(moveDir)
-				bodyVel.Velocity = dir.Unit * flySpeed
-			else
-				bodyVel.Velocity = Vector3.zero
-			end
-			bodyGyro.CFrame = cam.CFrame
-		end)
-	else
-		hum.PlatformStand = false
-		for _, v in ipairs(hrp:GetChildren()) do
-			if v:IsA("BodyGyro") or v:IsA("BodyVelocity") then v:Destroy() end
-		end
-	end
-end)
-
--- Invisible Ghost Mode
-createToggle("Invisible Ghost", 8, function(state)
-	if state then
-		local char = LocalPlayer.Character
-		if not char then return end
-		local clone = char:Clone()
-		for _, v in pairs(clone:GetDescendants()) do
-			if v:IsA("BasePart") then
-				v.Transparency = 1
-				v.Anchored = false
-			end
-		end
-		clone.Parent = workspace
-		char:MoveTo(Vector3.new(0, 9999, 0))
-	else
-		LocalPlayer.Character:MoveTo(workspace:FindFirstChildWhichIsA("SpawnLocation").Position)
-	end
-end)
-
--- Permadeath (R6)
-createToggle("Permadeath (R6)", 9, function(state)
-	if state then
-		local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-		if hum then
-			hum.Health = 0
+createButton("Spawn Unanchored", 23, function()
+	for _, part in ipairs(workspace:GetDescendants()) do
+		if part:IsA("BasePart") and not part.Anchored then
+			part.Position = LocalPlayer.Character:WaitForChild("HumanoidRootPart").Position + Vector3.new(0, 5, 0)
 		end
 	end
 end)
