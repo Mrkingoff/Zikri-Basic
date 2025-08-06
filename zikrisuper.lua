@@ -177,18 +177,7 @@ createButton("Get All Tools", 360, function()
 	end
 end)
 
-createToggle("Swim Mode", 410, function(state)
-	local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-	if hum then
-		if state then
-			hum:ChangeState(Enum.HumanoidStateType.Swimming)
-		else
-			hum:ChangeState(Enum.HumanoidStateType.RunningNoPhysics)
-		end
-	end
-end)
-
-createToggle("Deadboy", 460, function(state)
+createToggle("Deadboy", 410, function(state)
 	local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
 	if hum and state then
 		hum.Health = 0
@@ -197,7 +186,7 @@ createToggle("Deadboy", 460, function(state)
 	end
 end)
 
-createToggle("Invisible", 510, function(state)
+createToggle("Invisible", 460, function(state)
 	local char = LocalPlayer.Character
 	if char and char:FindFirstChild("HumanoidRootPart") then
 		if state then
@@ -208,7 +197,7 @@ createToggle("Invisible", 510, function(state)
 	end
 end)
 
-createToggle("Fly", 560, function(state)
+createToggle("Fly", 510, function(state)
 	local char = LocalPlayer.Character
 	if not char then return end
 	local hrp = char:WaitForChild("HumanoidRootPart")
@@ -236,7 +225,7 @@ createToggle("Fly", 560, function(state)
 	end
 end)
 
-createButton("Delete Tools All Player", 610, function()
+createButton("Delete Tools All Player", 560, function()
 	for _, plr in pairs(Players:GetPlayers()) do
 		if plr.Backpack then
 			for _, tool in pairs(plr.Backpack:GetChildren()) do
@@ -247,6 +236,18 @@ createButton("Delete Tools All Player", 610, function()
 			for _, tool in pairs(plr.Character:GetChildren()) do
 				if tool:IsA("Tool") then tool:Destroy() end
 			end
+		end
+	end
+end)
+
+-- Tombol Spawn Unanchored
+createButton("Spawn Unanchored", 610, function()
+	local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+	if not hrp then return end
+
+	for _, part in pairs(workspace:GetDescendants()) do
+		if part:IsA("BasePart") and not part.Anchored and part.CanCollide then
+			part.CFrame = hrp.CFrame * CFrame.new(0, 5, -5)
 		end
 	end
 end)
