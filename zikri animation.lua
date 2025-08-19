@@ -13,7 +13,7 @@ local httpservice = game:GetService("HttpService")
 
 local function clik()
 	local s = Instance.new("Sound") 
-	s["SoundId"] = "rbxassetid://100828050594137"
+	s["SoundId"] = "rbxassetid://0"
 	s["Parent"] = game["Workspace"]
 	s["Volume"] = 1.2
 	s["TimePosition"] = 0.1
