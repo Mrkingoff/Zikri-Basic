@@ -1,0 +1,255 @@
+--// 💀 ZIKTOT GOD CONTROL v6.0 (FULL MERGED)
+--// BY ZIKTOT 🔥
+--// God | Safety | AirWalk | Float | Noclip | ESP Full | Prompt | WS
+
+local plr = game.Players.LocalPlayer
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local playerGui = plr:WaitForChild("PlayerGui")
+
+--================ GUI =================--
+local gui = Instance.new("ScreenGui", playerGui)
+gui.Name = "ZIKTOT_GODMENU"
+gui.ResetOnSpawn = false
+
+local logo = Instance.new("TextButton", gui)
+logo.Size = UDim2.new(0,60,0,60)
+logo.Position = UDim2.new(0,20,0.8,0)
+logo.Text = "🎮"
+logo.TextSize = 30
+logo.BackgroundColor3 = Color3.fromRGB(40,40,40)
+logo.Font = Enum.Font.SourceSansBold
+logo.Active = true
+logo.Draggable = true
+Instance.new("UICorner", logo).CornerRadius = UDim.new(1,0)
+
+local frame = Instance.new("ScrollingFrame", gui)
+frame.Size = UDim2.new(0,320,0,380)
+frame.BackgroundColor3 = Color3.fromRGB(25,25,25)
+frame.BorderSizePixel = 2
+frame.BorderColor3 = Color3.fromRGB(80,80,80)
+frame.Visible = false
+frame.ScrollBarImageTransparency = 0.2
+frame.CanvasSize = UDim2.new(0,0,0,0)
+frame.Active = true
+Instance.new("UICorner", frame).CornerRadius = UDim.new(0,12)
+
+logo.MouseButton1Click:Connect(function()
+	frame.Visible = not frame.Visible
+end)
+
+RunService.RenderStepped:Connect(function()
+	if frame.Visible then
+		local p = logo.Position
+		frame.Position = UDim2.new(p.X.Scale,p.X.Offset+70,p.Y.Scale,p.Y.Offset-50)
+	end
+end)
+
+local title = Instance.new("TextLabel", frame)
+title.Size = UDim2.new(1,-10,0,32)
+title.Text = "☠️ ZIKTOT GOD CONTROL ☠️"
+title.TextColor3 = Color3.new(1,1,1)
+title.BackgroundColor3 = Color3.fromRGB(60,60,60)
+title.Font = Enum.Font.SourceSansBold
+title.TextSize = 16
+Instance.new("UICorner", title).CornerRadius = UDim.new(0,8)
+
+local layout = Instance.new("UIListLayout", frame)
+layout.Padding = UDim.new(0,6)
+layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+	frame.CanvasSize = UDim2.new(0,0,0,layout.AbsoluteContentSize.Y+10)
+end)
+
+local order = 1
+local function newButton(text)
+	local b = Instance.new("TextButton", frame)
+	b.Size = UDim2.new(1,-10,0,32)
+	b.Text = text
+	b.TextColor3 = Color3.new(1,1,1)
+	b.BackgroundColor3 = Color3.fromRGB(45,45,45)
+	b.Font = Enum.Font.SourceSansBold
+	b.TextSize = 15
+	b.LayoutOrder = order
+	order += 1
+	Instance.new("UICorner", b).CornerRadius = UDim.new(0,8)
+	return b
+end
+
+--================ STATES =================--
+local god, safety, wsOn, noclip, promptOn, floatOn, airWalk, espOn = false,false,false,false,false,false,false,false
+local noclipConn, airConn
+
+--================ GOD MODE =================--
+local godBtn = newButton("God Mode: OFF")
+godBtn.MouseButton1Click:Connect(function()
+	god = not god
+	godBtn.Text = "God Mode: "..(god and "ON" or "OFF")
+	task.spawn(function()
+		while god do
+			task.wait(0.2)
+			if plr.Character and plr.Character:FindFirstChild("Humanoid") then
+				plr.Character.Humanoid.Health = math.huge
+			end
+		end
+	end)
+end)
+
+--================ SAFETY MODE =================--
+local safetyBtn = newButton("Keselamatan: OFF")
+local invul = false
+
+local function shield(char)
+	if invul then return end
+	invul = true
+	local ff = Instance.new("ForceField", char)
+	task.delay(3,function()
+		if ff then ff:Destroy() end
+		invul = false
+	end)
+end
+
+local function hookHum(h)
+	h.HealthChanged:Connect(function(hp)
+		if safety and hp <= 5 then
+			h.Health = 20
+			shield(h.Parent)
+		end
+	end)
+end
+
+plr.CharacterAdded:Connect(function(c)
+	hookHum(c:WaitForChild("Humanoid"))
+end)
+if plr.Character then hookHum(plr.Character:WaitForChild("Humanoid")) end
+
+safetyBtn.MouseButton1Click:Connect(function()
+	safety = not safety
+	safetyBtn.Text = "Keselamatan: "..(safety and "ON" or "OFF")
+end)
+
+--================ WALKSPEED =================--
+local wsBtn = newButton("WalkSpeed: OFF")
+wsBtn.MouseButton1Click:Connect(function()
+	wsOn = not wsOn
+	wsBtn.Text = "WalkSpeed: "..(wsOn and "ON" or "OFF")
+	if plr.Character then
+		plr.Character.Humanoid.WalkSpeed = wsOn and 50 or 16
+	end
+end)
+
+--================ NOCLIP =================--
+local ncBtn = newButton("Noclip: OFF")
+ncBtn.MouseButton1Click:Connect(function()
+	noclip = not noclip
+	ncBtn.Text = "Noclip: "..(noclip and "ON" or "OFF")
+	if noclip then
+		noclipConn = RunService.Stepped:Connect(function()
+			if plr.Character then
+				for _,v in pairs(plr.Character:GetDescendants()) do
+					if v:IsA("BasePart") then v.CanCollide = false end
+				end
+			end
+		end)
+	else
+		if noclipConn then noclipConn:Disconnect() end
+	end
+end)
+
+--================ PROMPT 0 =================--
+local prBtn = newButton("Prompt 0 Durasi: OFF")
+prBtn.MouseButton1Click:Connect(function()
+	promptOn = not promptOn
+	prBtn.Text = "Prompt 0 Durasi: "..(promptOn and "ON" or "OFF")
+	for _,o in pairs(workspace:GetDescendants()) do
+		if o:IsA("ProximityPrompt") then
+			o.HoldDuration = promptOn and 0 or 0.5
+		end
+	end
+end)
+
+--================ FLOAT =================--
+local flBtn = newButton("Float: OFF")
+flBtn.MouseButton1Click:Connect(function()
+	floatOn = not floatOn
+	flBtn.Text = "Float: "..(floatOn and "ON" or "OFF")
+	task.spawn(function()
+		while floatOn do
+			task.wait(0.1)
+			if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+				plr.Character.HumanoidRootPart.Velocity = Vector3.new(0,3,0)
+			end
+		end
+	end)
+end)
+
+--================ AIR WALK =================--
+local airBtn = newButton("Air Walk: OFF")
+airBtn.MouseButton1Click:Connect(function()
+	airWalk = not airWalk
+	airBtn.Text = "Air Walk: "..(airWalk and "ON" or "OFF")
+	if airWalk then
+		airConn = RunService.RenderStepped:Connect(function()
+			if plr.Character then
+				local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
+				local hum = plr.Character:FindFirstChild("Humanoid")
+				if hrp and hum then
+					hrp.Velocity = hum.MoveDirection * 40
+				end
+			end
+		end)
+	else
+		if airConn then airConn:Disconnect() end
+	end
+end)
+
+--================ ESP PLAYER + BODY =================--
+local espBtn = newButton("ESP Player + Body: OFF")
+
+local function addESP(char,name)
+	if char:FindFirstChild("ZESP") then return end
+	local hl = Instance.new("Highlight", char)
+	hl.Name = "ZESP"
+	hl.FillColor = Color3.fromRGB(255,0,0)
+	hl.OutlineColor = Color3.new(1,1,1)
+	hl.FillTransparency = 0.5
+
+	if char:FindFirstChild("Head") then
+		local bb = Instance.new("BillboardGui", char.Head)
+		bb.Name = "ZNAME"
+		bb.Size = UDim2.new(0,200,0,40)
+		bb.AlwaysOnTop = true
+		local t = Instance.new("TextLabel", bb)
+		t.Size = UDim2.new(1,0,1,0)
+		t.BackgroundTransparency = 1
+		t.Text = name
+		t.TextColor3 = Color3.new(1,0,0)
+		t.Font = Enum.Font.SourceSansBold
+		t.TextSize = 14
+	end
+end
+
+local function clearESP(char)
+	if char:FindFirstChild("ZESP") then char.ZESP:Destroy() end
+	if char:FindFirstChild("Head") and char.Head:FindFirstChild("ZNAME") then
+		char.Head.ZNAME:Destroy()
+	end
+end
+
+espBtn.MouseButton1Click:Connect(function()
+	espOn = not espOn
+	espBtn.Text = "ESP Player + Body: "..(espOn and "ON" or "OFF")
+	for _,p in pairs(Players:GetPlayers()) do
+		if p ~= plr and p.Character then
+			if espOn then addESP(p.Character,p.Name) else clearESP(p.Character) end
+		end
+	end
+end)
+
+--================ RESET =================--
+local rsBtn = newButton("Reset Karakter")
+rsBtn.MouseButton1Click:Connect(function()
+	if plr.Character then
+		plr.Character.Humanoid.Health = 0
+	end
+end)
