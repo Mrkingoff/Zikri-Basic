@@ -1,6 +1,6 @@
---// 💀 ZIKTOT GOD CONTROL v6.0 (FULL MERGED)
+--// 💀 ZIKTOT GOD CONTROL v6.1 (FULL MERGED)
 --// BY ZIKTOT 🔥
---// God | Safety | AirWalk | Float | Noclip | ESP Full | Prompt | WS
+--// God | Safety | Anti Kill Block | WS | Noclip | Prompt | Float | AirWalk | ESP Full
 
 local plr = game.Players.LocalPlayer
 local Players = game:GetService("Players")
@@ -77,8 +77,10 @@ local function newButton(text)
 end
 
 --================ STATES =================--
-local god, safety, wsOn, noclip, promptOn, floatOn, airWalk, espOn = false,false,false,false,false,false,false,false
-local noclipConn, airConn
+local god, safety, antiBlock, wsOn, noclip, promptOn, floatOn, airWalk, espOn =
+	false,false,false,false,false,false,false,false,false
+
+local noclipConn, airConn, antiBlockConn
 
 --================ GOD MODE =================--
 local godBtn = newButton("God Mode: OFF")
@@ -126,6 +128,34 @@ if plr.Character then hookHum(plr.Character:WaitForChild("Humanoid")) end
 safetyBtn.MouseButton1Click:Connect(function()
 	safety = not safety
 	safetyBtn.Text = "Keselamatan: "..(safety and "ON" or "OFF")
+end)
+
+--================ ANTI KILL BLOCK =================--
+local abBtn = newButton("Anti Kill Block: OFF")
+
+local function setKillBlock(state)
+	for _,v in pairs(workspace:GetDescendants()) do
+		if v:IsA("BasePart") then
+			v.CanTouch = not state
+		end
+	end
+end
+
+abBtn.MouseButton1Click:Connect(function()
+	antiBlock = not antiBlock
+	abBtn.Text = "Anti Kill Block: "..(antiBlock and "ON" or "OFF")
+
+	if antiBlock then
+		setKillBlock(true)
+		antiBlockConn = workspace.DescendantAdded:Connect(function(v)
+			if antiBlock and v:IsA("BasePart") then
+				v.CanTouch = false
+			end
+		end)
+	else
+		if antiBlockConn then antiBlockConn:Disconnect() end
+		setKillBlock(false)
+	end
 end)
 
 --================ WALKSPEED =================--
