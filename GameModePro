@@ -1,0 +1,829 @@
+--// 🎮 ZIKTOT GOD MENU v6.0
+--// By ZIKTOT - Enhanced with Safety & AuraKill
+--// Added: Extra Life, AuraKill, Improved Float/Swim, Click TP, Invisible
+
+local plr = game:GetService("Players").LocalPlayer
+local playerGui = plr:WaitForChild("PlayerGui")
+local UIS = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+--=== MAIN GUI ===--
+local gui = Instance.new("ScreenGui")
+gui.Name = "ZikToT_Pro"
+gui.ResetOnSpawn = false
+gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+gui.Parent = playerGui
+
+--=== TOGGLE BUTTON ===--
+local toggle = Instance.new("TextButton")
+toggle.Name = "Toggle"
+toggle.Size = UDim2.new(0, 60, 0, 60)
+toggle.Position = UDim2.new(0, 20, 0.8, 0)
+toggle.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+toggle.TextColor3 = Color3.fromRGB(100, 255, 255)
+toggle.Text = "⚡"
+toggle.TextSize = 32
+toggle.Font = Enum.Font.GothamBold
+toggle.Draggable = true
+toggle.Active = true
+toggle.Selectable = true
+toggle.Parent = gui
+
+--=== MAIN FRAME ===--
+local frame = Instance.new("Frame")
+frame.Name = "MainFrame"
+frame.Size = UDim2.new(0, 320, 0, 500)
+frame.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+frame.BorderSizePixel = 0
+frame.Visible = false
+frame.Parent = gui
+
+--=== TOP BAR ===--
+local topbar = Instance.new("Frame")
+topbar.Name = "TopBar"
+topbar.Size = UDim2.new(1, 0, 0, 40)
+topbar.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+topbar.Parent = frame
+
+local title = Instance.new("TextLabel")
+title.Name = "Title"
+title.Size = UDim2.new(1, -40, 1, 0)
+title.Position = UDim2.new(0, 10, 0, 0)
+title.Text = "ZIKTOT PRO v6.0"
+title.TextColor3 = Color3.fromRGB(100, 255, 255)
+title.BackgroundTransparency = 1
+title.TextSize = 18
+title.Font = Enum.Font.GothamBold
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.Parent = topbar
+
+local closeBtn = Instance.new("TextButton")
+closeBtn.Name = "Close"
+closeBtn.Size = UDim2.new(0, 30, 0, 30)
+closeBtn.Position = UDim2.new(1, -35, 0.5, -15)
+closeBtn.Text = "X"
+closeBtn.TextColor3 = Color3.fromRGB(255, 100, 100)
+closeBtn.BackgroundTransparency = 1
+closeBtn.TextSize = 18
+closeBtn.Font = Enum.Font.GothamBold
+closeBtn.Parent = topbar
+
+--=== SCROLLING FRAME ===--
+local scroll = Instance.new("ScrollingFrame")
+scroll.Name = "Scroll"
+scroll.Size = UDim2.new(1, 0, 1, -45)
+scroll.Position = UDim2.new(0, 0, 0, 45)
+scroll.BackgroundTransparency = 1
+scroll.BorderSizePixel = 0
+scroll.ScrollBarThickness = 6
+scroll.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 120)
+scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+scroll.Parent = frame
+
+--=== UI LIST LAYOUT ===--
+local list = Instance.new("UIListLayout")
+list.Name = "List"
+list.Padding = UDim.new(0, 8)
+list.HorizontalAlignment = Enum.HorizontalAlignment.Center
+list.Parent = scroll
+
+--=== FUNCTIONS ===--
+local function createButton(text)
+	local btn = Instance.new("TextButton")
+	btn.Name = text
+	btn.Size = UDim2.new(0.92, 0, 0, 42)
+	btn.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+	btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+	btn.Text = text
+	btn.TextSize = 16
+	btn.Font = Enum.Font.Gotham
+	btn.AutoButtonColor = true
+	btn.Parent = scroll
+	
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 8)
+	corner.Parent = btn
+	
+	return btn
+end
+
+local function updateFramePosition()
+	if frame.Visible then
+		frame.Position = UDim2.new(
+			toggle.Position.X.Scale,
+			toggle.Position.X.Offset + 70,
+			toggle.Position.Y.Scale,
+			toggle.Position.Y.Offset - 50
+		)
+	end
+end
+
+--=== TOGGLE LOGIC ===--
+toggle.MouseButton1Click:Connect(function()
+	frame.Visible = not frame.Visible
+	updateFramePosition()
+end)
+
+closeBtn.MouseButton1Click:Connect(function()
+	frame.Visible = false
+end)
+
+game:GetService("RunService").RenderStepped:Connect(updateFramePosition)
+
+--=== VARIABLES ===--
+local states = {
+	god = false,
+	extraLife = false,
+	antiBlock = false,
+	antiNpc = false,
+	ws = false,
+	esp = false,
+	noclip = false,
+	prompt = false,
+	float = false,
+	swim = false,
+	auraKill = false,
+	invisible = false,
+	clickTP = false
+}
+
+local connections = {}
+local auraKillParts = {}
+local extraLifeUsed = false
+local originalTransparency = {}
+
+--=== SAFETY SYSTEM: EXTRA LIFE ===--
+local function setupExtraLife()
+	if not plr.Character then return end
+	
+	local humanoid = plr.Character:FindFirstChild("Humanoid")
+	if not humanoid then return end
+	
+	humanoid.Died:Connect(function()
+		if states.extraLife and not extraLifeUsed then
+			extraLifeUsed = true
+			task.wait(0.5)
+			
+			if plr.Character then
+				local newHumanoid = plr.Character:FindFirstChild("Humanoid")
+				if newHumanoid then
+					-- Set to critical state (1 health)
+					newHumanoid.Health = 1
+					newHumanoid.MaxHealth = 100
+					
+					-- Add visual effect
+					local effect = Instance.new("ParticleEmitter")
+					effect.Color = ColorSequence.new(Color3.fromRGB(255, 0, 0))
+					effect.Size = NumberSequence.new(0.5)
+					effect.Lifetime = NumberRange.new(1)
+					effect.Rate = 50
+					effect.Speed = NumberRange.new(5)
+					effect.Parent = plr.Character:FindFirstChild("HumanoidRootPart") or plr.Character:FindFirstChild("Head")
+					
+					task.delay(2, function()
+						effect:Destroy()
+					end)
+					
+					print("[SAFETY] Extra life activated! Health: 1")
+				end
+			end
+			
+			-- Reset after 30 seconds
+			task.delay(30, function()
+				extraLifeUsed = false
+			end)
+		end
+	end)
+end
+
+-- Setup extra life on character added
+plr.CharacterAdded:Connect(function()
+	setupExtraLife()
+end)
+
+if plr.Character then
+	setupExtraLife()
+end
+
+--=== AURA KILL SYSTEM ===--
+local function activateAuraKill()
+	if not plr.Character then return end
+	
+	local character = plr.Character
+	local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+	if not humanoidRootPart then return end
+	
+	-- Destroy previous aura parts
+	for _, part in pairs(auraKillParts) do
+		if part then part:Destroy() end
+	end
+	auraKillParts = {}
+	
+	-- Create aura sphere
+	local aura = Instance.new("Part")
+	aura.Name = "AuraKillSphere"
+	aura.Shape = Enum.PartType.Ball
+	aura.Size = Vector3.new(10, 10, 10)
+	aura.Transparency = 0.7
+	aura.Color = Color3.fromRGB(255, 0, 0)
+	aura.Material = EnumMaterial.Neon
+	aura.CanCollide = false
+	aura.Anchored = true
+	aura.Parent = workspace
+	
+	local weld = Instance.new("Weld")
+	weld.Part0 = humanoidRootPart
+	weld.Part1 = aura
+	weld.C0 = CFrame.new(0, 0, 0)
+	weld.Parent = aura
+	
+	table.insert(auraKillParts, aura)
+	
+	-- Damage loop
+	task.spawn(function()
+		while states.auraKill do
+			task.wait(0.5)
+			
+			-- Check if holding tool
+			local tool = character:FindFirstChildOfClass("Tool")
+			if not tool then
+				states.auraKill = false
+				buttons.auraKill.Text = "☠️ AuraKill: OFF"
+				break
+			end
+			
+			-- Damage all nearby players
+			for _, otherPlayer in pairs(game:GetService("Players"):GetPlayers()) do
+				if otherPlayer ~= plr and otherPlayer.Character then
+					local targetHRP = otherPlayer.Character:FindFirstChild("HumanoidRootPart")
+					if targetHRP then
+						local distance = (humanoidRootPart.Position - targetHRP.Position).Magnitude
+						if distance <= 20 then -- 20 stud radius
+							local humanoid = otherPlayer.Character:FindFirstChild("Humanoid")
+							if humanoid then
+								humanoid:TakeDamage(100) -- Instant kill
+								
+								-- Visual effect
+								local hitEffect = Instance.new("Part")
+								hitEffect.Size = Vector3.new(2, 2, 2)
+								hitEffect.Position = targetHRP.Position
+								hitEffect.Color = Color3.fromRGB(255, 0, 0)
+								hitEffect.Material = EnumMaterial.Neon
+								hitEffect.Transparency = 0.5
+								hitEffect.Anchored = true
+								hitEffect.CanCollide = false
+								hitEffect.Parent = workspace
+								
+								task.delay(0.5, function()
+									hitEffect:Destroy()
+								end)
+							end
+						end
+					end
+				end
+			end
+		end
+		
+		-- Cleanup aura
+		for _, part in pairs(auraKillParts) do
+			if part then part:Destroy() end
+		end
+		auraKillParts = {}
+	end)
+end
+
+--=== IMPROVED FLOAT MODE ===--
+local function activateFloat()
+	task.spawn(function()
+		while states.float do
+			task.wait(0.05)
+			if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+				local hrp = plr.Character.HumanoidRootPart
+				local humanoid = plr.Character:FindFirstChild("Humanoid")
+				
+				if humanoid then
+					humanoid.PlatformStand = true -- Enable floating
+				end
+				
+				-- Float logic
+				local ray = Ray.new(hrp.Position, Vector3.new(0, -10, 0))
+				local hit = workspace:FindPartOnRay(ray, plr.Character)
+				
+				if not hit then
+					-- In air, apply upward force
+					hrp.Velocity = Vector3.new(hrp.Velocity.X, 0, hrp.Velocity.Z)
+					
+					-- Control with keys
+					if UIS:IsKeyDown(Enum.KeyCode.Space) then
+						hrp.CFrame = hrp.CFrame + Vector3.new(0, 0.5, 0)
+					elseif UIS:IsKeyDown(Enum.KeyCode.LeftControl) or UIS:IsKeyDown(Enum.KeyCode.ButtonB) then
+						hrp.CFrame = hrp.CFrame + Vector3.new(0, -0.5, 0)
+					end
+				end
+			end
+		end)
+	end)
+end
+
+--=== SWIM IN AIR ===--
+local function activateSwim()
+	task.spawn(function()
+		while states.swim do
+			task.wait(0.05)
+			if plr.Character then
+				local humanoid = plr.Character:FindFirstChild("Humanoid")
+				if humanoid then
+					humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+					humanoid:SetStateEnabled(Enum.HumanoidStateType.Running, false)
+					humanoid:ChangeState(Enum.HumanoidStateType.Swimming)
+					
+					-- Apply swim movement
+					local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
+					if hrp then
+						-- Control swim direction
+						local forward = 0
+						local backward = 0
+						local left = 0
+						local right = 0
+						
+						if UIS:IsKeyDown(Enum.KeyCode.W) then forward = 1 end
+						if UIS:IsKeyDown(Enum.KeyCode.S) then backward = -1 end
+						if UIS:IsKeyDown(Enum.KeyCode.A) then left = -1 end
+						if UIS:IsKeyDown(Enum.KeyCode.D) then right = 1 end
+						
+						local moveDirection = (hrp.CFrame.LookVector * (forward + backward)) + 
+											  (hrp.CFrame.RightVector * (left + right))
+						
+						hrp.Velocity = moveDirection * 25 + Vector3.new(0, 5, 0)
+					end
+				end
+			end
+		end)
+	end)
+end
+
+--=== CLICK TELEPORT ===--
+local function setupClickTP()
+	local connection
+	local indicator = Instance.new("Part")
+	indicator.Name = "TPIndicator"
+	indicator.Size = Vector3.new(2, 0.2, 2)
+	indicator.Color = Color3.fromRGB(0, 255, 0)
+	indicator.Material = EnumMaterial.Neon
+	indicator.Transparency = 0.5
+	indicator.Anchored = true
+	indicator.CanCollide = false
+	indicator.Parent = nil
+	
+	connection = UIS.InputBegan:Connect(function(input, gameProcessed)
+		if not gameProcessed and states.clickTP and input.UserInputType == Enum.UserInputType.MouseButton1 then
+			local mouse = plr:GetMouse()
+			local target = mouse.Hit.Position
+			
+			-- Show indicator
+			indicator.Position = target + Vector3.new(0, 0.1, 0)
+			indicator.Parent = workspace
+			
+			-- Teleport character
+			if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+				plr.Character:FindFirstChild("HumanoidRootPart").CFrame = CFrame.new(target + Vector3.new(0, 5, 0))
+				
+				-- Visual effect
+				local teleportEffect = Instance.new("Part")
+				teleportEffect.Size = Vector3.new(5, 5, 5)
+				teleportEffect.Position = target
+				teleportEffect.Color = Color3.fromRGB(0, 255, 255)
+				teleportEffect.Material = EnumMaterial.Neon
+				teleportEffect.Transparency = 0.7
+				teleportEffect.Anchored = true
+				teleportEffect.CanCollide = false
+				teleportEffect.Shape = Enum.PartType.Ball
+				teleportEffect.Parent = workspace
+				
+				task.delay(1, function()
+					teleportEffect:Destroy()
+					indicator.Parent = nil
+				end)
+			end
+		end
+	end)
+	
+	table.insert(connections, connection)
+end
+
+--=== INVISIBLE MODE ===--
+local function toggleInvisible()
+	if not plr.Character then return end
+	
+	if states.invisible then
+		-- Save original transparency and make invisible
+		for _, part in pairs(plr.Character:GetDescendants()) do
+			if part:IsA("BasePart") then
+				originalTransparency[part] = part.Transparency
+				part.Transparency = 1
+				
+				-- Make tool also invisible
+				local tool = plr.Character:FindFirstChildOfClass("Tool")
+				if tool then
+					for _, toolPart in pairs(tool:GetDescendants()) do
+						if toolPart:IsA("BasePart") then
+							originalTransparency[toolPart] = toolPart.Transparency
+							toolPart.Transparency = 1
+						end
+					end
+				end
+			end
+		end
+		
+		-- Add shimmer effect
+		task.spawn(function()
+			while states.invisible do
+				task.wait(2)
+				if plr.Character then
+					for _, part in pairs(plr.Character:GetDescendants()) do
+						if part:IsA("BasePart") then
+							part.Transparency = 0.2
+							task.wait(0.1)
+							part.Transparency = 1
+						end
+					end
+				end
+			end
+		end)
+		
+	else
+		-- Restore original transparency
+		for part, transparency in pairs(originalTransparency) do
+			if part and part.Parent then
+				part.Transparency = transparency
+			end
+		end
+		originalTransparency = {}
+	end
+end
+
+--=== BUTTON CREATION ===--
+local buttons = {}
+local yOffset = 5
+
+-- GOD MODE
+buttons.god = createButton("🔓 God Mode: OFF")
+buttons.god.Position = UDim2.new(0.04, 0, 0, yOffset)
+yOffset = yOffset + 47
+
+buttons.god.MouseButton1Click:Connect(function()
+	states.god = not states.god
+	buttons.god.Text = "🔓 God Mode: " .. (states.god and "ON" or "OFF")
+	
+	if states.god then
+		task.spawn(function()
+			while states.god do
+				task.wait(0.2)
+				if plr.Character and plr.Character:FindFirstChild("Humanoid") then
+					plr.Character.Humanoid.Health = math.huge
+				end
+			end
+		end)
+	end
+end)
+
+-- EXTRA LIFE (SAFETY)
+buttons.extraLife = createButton("💖 Extra Life: OFF")
+buttons.extraLife.Position = UDim2.new(0.04, 0, 0, yOffset)
+yOffset = yOffset + 47
+
+buttons.extraLife.MouseButton1Click:Connect(function()
+	states.extraLife = not states.extraLife
+	buttons.extraLife.Text = "💖 Extra Life: " .. (states.extraLife and "ON" or "OFF")
+	
+	if states.extraLife then
+		extraLifeUsed = false
+		print("[SAFETY] Extra Life activated! Will revive with 1 HP.")
+	else
+		print("[SAFETY] Extra Life deactivated.")
+	end
+end)
+
+-- ANTI KILL BLOCK
+buttons.antiBlock = createButton("🛡️ Anti Kill Block: OFF")
+buttons.antiBlock.Position = UDim2.new(0.04, 0, 0, yOffset)
+yOffset = yOffset + 47
+
+buttons.antiBlock.MouseButton1Click:Connect(function()
+	states.antiBlock = not states.antiBlock
+	buttons.antiBlock.Text = "🛡️ Anti Kill Block: " .. (states.antiBlock and "ON" or "OFF")
+	
+	if states.antiBlock then
+		connections.block = workspace.DescendantAdded:Connect(function(v)
+			if v:IsA("BasePart") then
+				v.CanTouch = false
+			end
+		end)
+		
+		task.spawn(function()
+			for _, v in pairs(workspace:GetDescendants()) do
+				if v:IsA("BasePart") then
+					v.CanTouch = false
+				end
+			end
+		end)
+	else
+		if connections.block then
+			connections.block:Disconnect()
+		end
+		task.spawn(function()
+			for _, v in pairs(workspace:GetDescendants()) do
+				if v:IsA("BasePart") then
+					v.CanTouch = true
+				end
+			end
+		end)
+	end
+end)
+
+-- ANTI NPC
+buttons.antiNpc = createButton("👹 Anti NPC: OFF")
+buttons.antiNpc.Position = UDim2.new(0.04, 0, 0, yOffset)
+yOffset = yOffset + 47
+
+buttons.antiNpc.MouseButton1Click:Connect(function()
+	states.antiNpc = not states.antiNpc
+	buttons.antiNpc.Text = "👹 Anti NPC: " .. (states.antiNpc and "ON" or "OFF")
+	
+	if states.antiNpc then
+		task.spawn(function()
+			while states.antiNpc do
+				task.wait(0.2)
+				if plr.Character and plr.Character:FindFirstChild("Humanoid") then
+					plr.Character.Humanoid.Health = math.huge
+				end
+			end
+		end)
+	end
+end)
+
+-- WALK SPEED
+buttons.ws = createButton("🚶 WalkSpeed: OFF")
+buttons.ws.Position = UDim2.new(0.04, 0, 0, yOffset)
+yOffset = yOffset + 47
+
+buttons.ws.MouseButton1Click:Connect(function()
+	states.ws = not states.ws
+	buttons.ws.Text = "🚶 WalkSpeed: " .. (states.ws and "ON" or "OFF")
+	
+	if plr.Character and plr.Character:FindFirstChild("Humanoid") then
+		plr.Character.Humanoid.WalkSpeed = states.ws and 50 or 16
+	end
+end)
+
+-- ESP PLAYER
+buttons.esp = createButton("👁️ ESP Player: OFF")
+buttons.esp.Position = UDim2.new(0.04, 0, 0, yOffset)
+yOffset = yOffset + 47
+
+buttons.esp.MouseButton1Click:Connect(function()
+	states.esp = not states.esp
+	buttons.esp.Text = "👁️ ESP Player: " .. (states.esp and "ON" or "OFF")
+	
+	for _, p in pairs(game:GetService("Players"):GetPlayers()) do
+		if p ~= plr and p.Character and p.Character:FindFirstChild("Head") then
+			local head = p.Character.Head
+			local esp = head:FindFirstChild("ZESP")
+			
+			if states.esp then
+				if not esp then
+					local billboard = Instance.new("BillboardGui")
+					billboard.Name = "ZESP"
+					billboard.Size = UDim2.new(0, 200, 0, 50)
+					billboard.AlwaysOnTop = true
+					billboard.Adornee = head
+					billboard.Parent = head
+					
+					local label = Instance.new("TextLabel")
+					label.Size = UDim2.new(1, 0, 1, 0)
+					label.Text = p.Name
+					label.TextColor3 = Color3.fromRGB(255, 50, 50)
+					label.BackgroundTransparency = 1
+					label.Font = Enum.Font.GothamBold
+					label.TextSize = 14
+					label.Parent = billboard
+				end
+			else
+				if esp then
+					esp:Destroy()
+				end
+			end
+		end
+	end
+end)
+
+-- NOCLIP
+buttons.noclip = createButton("👻 Noclip: OFF")
+buttons.noclip.Position = UDim2.new(0.04, 0, 0, yOffset)
+yOffset = yOffset + 47
+
+buttons.noclip.MouseButton1Click:Connect(function()
+	states.noclip = not states.noclip
+	buttons.noclip.Text = "👻 Noclip: " .. (states.noclip and "ON" or "OFF")
+	
+	if states.noclip then
+		if connections.noclip then
+			connections.noclip:Disconnect()
+		end
+		connections.noclip = RunService.Stepped:Connect(function()
+			if plr.Character then
+				for _, part in pairs(plr.Character:GetDescendants()) do
+					if part:IsA("BasePart") then
+						part.CanCollide = false
+					end
+				end
+			end
+		end)
+	else
+		if connections.noclip then
+			connections.noclip:Disconnect()
+		end
+	end
+end)
+
+-- PROMPT NO DURATION
+buttons.prompt = createButton("⏱️ Instant Prompt: OFF")
+buttons.prompt.Position = UDim2.new(0.04, 0, 0, yOffset)
+yOffset = yOffset + 47
+
+buttons.prompt.MouseButton1Click:Connect(function()
+	states.prompt = not states.prompt
+	buttons.prompt.Text = "⏱️ Instant Prompt: " .. (states.prompt and "ON" or "OFF")
+	
+	if states.prompt then
+		connections.prompt = workspace.DescendantAdded:Connect(function(obj)
+			if obj:IsA("ProximityPrompt") then
+				obj.HoldDuration = 0
+			end
+		end)
+		
+		task.spawn(function()
+			for _, obj in pairs(workspace:GetDescendants()) do
+				if obj:IsA("ProximityPrompt") then
+					obj.HoldDuration = 0
+				end
+			end
+		end)
+	else
+		if connections.prompt then
+			connections.prompt:Disconnect()
+		end
+		task.spawn(function()
+			for _, obj in pairs(workspace:GetDescendants()) do
+				if obj:IsA("ProximityPrompt") then
+					obj.HoldDuration = 0.5
+				end
+			end
+		end)
+	end
+end)
+
+-- IMPROVED FLOAT MODE
+buttons.float = createButton("🎈 Float (Improved): OFF")
+buttons.float.Position = UDim2.new(0.04, 0, 0, yOffset)
+yOffset = yOffset + 47
+
+buttons.float.MouseButton1Click:Connect(function()
+	states.float = not states.float
+	buttons.float.Text = "🎈 Float (Improved): " .. (states.float and "ON" or "OFF")
+	
+	if states.float then
+		activateFloat()
+	else
+		if plr.Character and plr.Character:FindFirstChild("Humanoid") then
+			plr.Character.Humanoid.PlatformStand = false
+		end
+	end
+end)
+
+-- SWIM IN AIR
+buttons.swim = createButton("🏊 Swim in Air: OFF")
+buttons.swim.Position = UDim2.new(0.04, 0, 0, yOffset)
+yOffset = yOffset + 47
+
+buttons.swim.MouseButton1Click:Connect(function()
+	states.swim = not states.swim
+	buttons.swim.Text = "🏊 Swim in Air: " .. (states.swim and "ON" or "OFF")
+	
+	if states.swim then
+		activateSwim()
+	else
+		if plr.Character and plr.Character:FindFirstChild("Humanoid") then
+			local humanoid = plr.Character.Humanoid
+			humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, true)
+			humanoid:SetStateEnabled(Enum.HumanoidStateType.Running, true)
+		end
+	end
+end)
+
+-- AURAKILL
+buttons.auraKill = createButton("☠️ AuraKill: OFF")
+buttons.auraKill.Position = UDim2.new(0.04, 0, 0, yOffset)
+yOffset = yOffset + 47
+
+buttons.auraKill.MouseButton1Click:Connect(function()
+	if not plr.Character or not plr.Character:FindFirstChildOfClass("Tool") then
+		warn("[AURAKILL] You need to equip a tool first!")
+		return
+	end
+	
+	states.auraKill = not states.auraKill
+	buttons.auraKill.Text = "☠️ AuraKill: " .. (states.auraKill and "ON" or "OFF")
+	
+	if states.auraKill then
+		activateAuraKill()
+	end
+end)
+
+-- CLICK TELEPORT
+buttons.clickTP = createButton("📍 Click TP: OFF")
+buttons.clickTP.Position = UDim2.new(0.04, 0, 0, yOffset)
+yOffset = yOffset + 47
+
+buttons.clickTP.MouseButton1Click:Connect(function()
+	states.clickTP = not states.clickTP
+	buttons.clickTP.Text = "📍 Click TP: " .. (states.clickTP and "ON" or "OFF")
+	
+	if states.clickTP then
+		setupClickTP()
+		print("[CLICK TP] Enabled! Left-click anywhere to teleport.")
+	else
+		print("[CLICK TP] Disabled.")
+	end
+end)
+
+-- INVISIBLE MODE
+buttons.invisible = createButton("👻 Invisible: OFF")
+buttons.invisible.Position = UDim2.new(0.04, 0, 0, yOffset)
+yOffset = yOffset + 47
+
+buttons.invisible.MouseButton1Click:Connect(function()
+	states.invisible = not states.invisible
+	buttons.invisible.Text = "👻 Invisible: " .. (states.invisible and "ON" or "OFF")
+	
+	toggleInvisible()
+	print("[INVISIBLE] Mode: " .. (states.invisible and "ON" or "OFF"))
+end)
+
+-- RESET CHARACTER
+buttons.reset = createButton("🔄 Reset Character")
+buttons.reset.Position = UDim2.new(0.04, 0, 0, yOffset)
+yOffset = yOffset + 47
+
+buttons.reset.MouseButton1Click:Connect(function()
+	if plr.Character and plr.Character:FindFirstChild("Humanoid") then
+		plr.Character.Humanoid.Health = 0
+	end
+end)
+
+-- CLEANUP ON GAME CLOSE
+plr.CharacterRemoving:Connect(function()
+	for _, conn in pairs(connections) do
+		if typeof(conn) == "RBXScriptConnection" then
+			conn:Disconnect()
+		end
+	end
+	connections = {}
+	
+	-- Cleanup aura
+	for _, part in pairs(auraKillParts) do
+		if part then part:Destroy() end
+	end
+	auraKillParts = {}
+end)
+
+--=== STYLING ===--
+-- Rounded corners for frame
+local frameCorner = Instance.new("UICorner")
+frameCorner.CornerRadius = UDim.new(0, 12)
+frameCorner.Parent = frame
+
+local topbarCorner = Instance.new("UICorner")
+topbarCorner.CornerRadius = UDim.new(0, 12, 0, 0)
+topbarCorner.Parent = topbar
+
+-- Drop shadow effect
+local shadow = Instance.new("ImageLabel")
+shadow.Name = "Shadow"
+shadow.Size = UDim2.new(1, 10, 1, 10)
+shadow.Position = UDim2.new(0, -5, 0, -5)
+shadow.BackgroundTransparency = 1
+shadow.Image = "rbxassetid://5554236805"
+shadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
+shadow.ImageTransparency = 0.8
+shadow.ScaleType = Enum.ScaleType.Slice
+shadow.SliceCenter = Rect.new(10, 10, 118, 118)
+shadow.Parent = frame
+
+-- Make shadow render behind frame
+shadow.ZIndex = frame.ZIndex - 1
+
+print("🎮 ZIKTOT PRO MENU v6.0 LOADED SUCCESSFULLY!")
+print("⚡ Click the toggle button to open menu")
+print("🆕 NEW FEATURES: Extra Life, AuraKill, Improved Float, Swim, Click TP, Invisible")
