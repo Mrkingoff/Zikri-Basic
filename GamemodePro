@@ -1,0 +1,600 @@
+--[[
+    MODERNIZED FLING GUI WITH LOGO
+    Original Logic by: R-77
+    UI Overhaul & Logo System by: Gemini AI
+]]
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local CoreGui = game:GetService("CoreGui")
+
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+
+-- // Configuration
+local Config = {
+    Theme = {
+        MainColor = Color3.fromRGB(25, 25, 30),
+        AccentColor = Color3.fromRGB(0, 255, 170), -- Neon Cyan
+        TextColor = Color3.fromRGB(240, 240, 240),
+        SecondaryColor = Color3.fromRGB(35, 35, 40),
+        HoverColor = Color3.fromRGB(45, 45, 50)
+    },
+    Speed = 0.3 -- Animation speed
+}
+
+-- // Logic Variables
+local Targets = {}
+local AllBool = false
+local noclipEnabled = false
+local noclipConnection = nil
+local originalCanCollide = {}
+local antiFallEnabled = false
+local antiFallConnection = nil
+
+-- // UI Creation Helper
+local UI = {}
+
+function UI.Create(instanceType, properties)
+    local instance = Instance.new(instanceType)
+    for k, v in pairs(properties) do
+        instance[k] = v
+    end
+    return instance
+end
+
+function UI.MakeDraggable(frame, dragHandle)
+    local dragging, dragInput, dragStart, startPos
+    
+    dragHandle.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            dragStart = input.Position
+            startPos = frame.Position
+            
+            -- Visual feedback
+            TweenService:Create(dragHandle, TweenInfo.new(0.1), {Size = UDim2.new(0, 45, 0, 45)}):Play()
+            
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then 
+                    dragging = false
+                    TweenService:Create(dragHandle, TweenInfo.new(0.1), {Size = UDim2.new(0, 40, 0, 40)}):Play()
+                end
+            end)
+        end
+    end)
+    
+    dragHandle.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement then 
+            dragInput = input 
+        end
+    end)
+    
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            local delta = input.Position - dragStart
+            local newPos = UDim2.new(
+                startPos.X.Scale,
+                startPos.X.Offset + delta.X,
+                startPos.Y.Scale,
+                startPos.Y.Offset + delta.Y
+            )
+            frame.Position = newPos
+        end
+    end)
+end
+
+function UI.AnimateButton(btn)
+    btn.MouseEnter:Connect(function()
+        TweenService:Create(btn, TweenInfo.new(Config.Speed), {
+            BackgroundColor3 = Config.Theme.AccentColor,
+            TextColor3 = Color3.new(0, 0, 0)
+        }):Play()
+    end)
+    
+    btn.MouseLeave:Connect(function()
+        TweenService:Create(btn, TweenInfo.new(Config.Speed), {
+            BackgroundColor3 = Config.Theme.SecondaryColor,
+            TextColor3 = Config.Theme.TextColor
+        }):Play()
+    end)
+end
+
+-- // Logic Functions
+local function Notify(title, text, duration)
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = title;
+        Text = text;
+        Duration = duration or 3;
+    })
+end
+
+local GetPlayer = function(Name)
+    Name = Name:lower()
+    if Name == "all" or Name == "others" then
+        AllBool = true
+        return
+    elseif Name == "random" then
+        local GetPlayers = Players:GetPlayers()
+        if table.find(GetPlayers, LocalPlayer) then
+            table.remove(GetPlayers, table.find(GetPlayers, LocalPlayer))
+        end
+        return GetPlayers[math.random(#GetPlayers)]
+    else
+        for _, x in next, Players:GetPlayers() do
+            if x ~= LocalPlayer then
+                if x.Name:lower():match("^" .. Name) or x.DisplayName:lower():match("^" .. Name) then
+                    return x
+                end
+            end
+        end
+    end
+end
+
+local function toggleNoclip()
+    noclipEnabled = not noclipEnabled
+    if noclipEnabled then
+        noclipConnection = RunService.Stepped:Connect(function()
+            if LocalPlayer.Character then
+                for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
+                    if part:IsA("BasePart") and part.CanCollide then
+                        part.CanCollide = false
+                    end
+                end
+            end
+        end)
+        Notify("System", "Noclip Enabled", 2)
+    else
+        if noclipConnection then noclipConnection:Disconnect() end
+        Notify("System", "Noclip Disabled", 2)
+    end
+end
+
+local function toggleAntiFallDamage()
+    antiFallEnabled = not antiFallEnabled
+    if antiFallEnabled then
+        if game.PlaceId ~= 189707 then
+            Notify("Warning", "Only works in Natural Disaster Survival!", 3)
+            antiFallEnabled = false
+            return
+        end
+        
+        local function preventFall(char)
+            local root = char:WaitForChild("HumanoidRootPart", 5)
+            if root then
+                antiFallConnection = RunService.Heartbeat:Connect(function()
+                    if not antiFallEnabled then return end
+                    local oldVel = root.AssemblyLinearVelocity
+                    root.AssemblyLinearVelocity = Vector3.zero
+                    RunService.RenderStepped:Wait()
+                    root.AssemblyLinearVelocity = oldVel
+                end)
+            end
+        end
+        
+        if LocalPlayer.Character then preventFall(LocalPlayer.Character) end
+        LocalPlayer.CharacterAdded:Connect(preventFall)
+        Notify("System", "Anti-Fall Enabled (NDS)", 2)
+    else
+        if antiFallConnection then antiFallConnection:Disconnect() end
+        Notify("System", "Anti-Fall Disabled", 2)
+    end
+end
+
+local SkidFling = function(TargetPlayer)
+    if not TargetPlayer or not TargetPlayer.Character then return end
+    
+    local Character = LocalPlayer.Character
+    local Humanoid = Character and Character:FindFirstChildOfClass("Humanoid")
+    local RootPart = Humanoid and Humanoid.RootPart
+    
+    local TCharacter = TargetPlayer.Character
+    local THumanoid = TCharacter:FindFirstChildOfClass("Humanoid")
+    local TRootPart = THumanoid and THumanoid.RootPart
+    
+    if not Character or not Humanoid or not RootPart then return end
+    if not TCharacter or not THumanoid or not TRootPart then return end
+    
+    if THumanoid.Sit and not AllBool then
+        return Notify("Error", "Target is sitting", 3)
+    end
+
+    local OldPos = RootPart.CFrame
+    workspace.CurrentCamera.CameraSubject = THumanoid
+    
+    local FPos = function(BasePart, Pos, Ang)
+        RootPart.CFrame = CFrame.new(BasePart.Position) * Pos * Ang
+        Character:PivotTo(CFrame.new(BasePart.Position) * Pos * Ang)
+        RootPart.AssemblyLinearVelocity = Vector3.new(9e7, 9e7 * 10, 9e7)
+        RootPart.AssemblyAngularVelocity = Vector3.new(9e8, 9e8, 9e8)
+    end
+    
+    local Time = tick()
+    local Angle = 0
+    
+    workspace.FallenPartsDestroyHeight = 0/0
+    
+    local BV = Instance.new("BodyVelocity")
+    BV.Parent = RootPart
+    BV.Velocity = Vector3.new(9e8, 9e8, 9e8)
+    BV.MaxForce = Vector3.new(1/0, 1/0, 1/0)
+    
+    Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
+    
+    repeat
+        if RootPart and THumanoid then
+             if TRootPart.AssemblyLinearVelocity.Magnitude < 50 then
+                Angle = Angle + 100
+                FPos(TRootPart, CFrame.new(0, 1.5, 0) + THumanoid.MoveDirection * TRootPart.AssemblyLinearVelocity.Magnitude / 1.25, CFrame.Angles(math.rad(Angle),0 ,0))
+                task.wait()
+                FPos(TRootPart, CFrame.new(0, -1.5, 0) + THumanoid.MoveDirection * TRootPart.AssemblyLinearVelocity.Magnitude / 1.25, CFrame.Angles(math.rad(Angle), 0, 0))
+                task.wait()
+                FPos(TRootPart, CFrame.new(2.25, 1.5, -2.25) + THumanoid.MoveDirection * TRootPart.AssemblyLinearVelocity.Magnitude / 1.25, CFrame.Angles(math.rad(Angle), 0, 0))
+                task.wait()
+                FPos(TRootPart, CFrame.new(-2.25, -1.5, 2.25) + THumanoid.MoveDirection * TRootPart.AssemblyLinearVelocity.Magnitude / 1.25, CFrame.Angles(math.rad(Angle), 0, 0))
+                task.wait()
+                FPos(TRootPart, CFrame.new(0, 1.5, 0) + THumanoid.MoveDirection,CFrame.Angles(math.rad(Angle), 0, 0))
+                task.wait()
+                FPos(TRootPart, CFrame.new(0, -1.5, 0) + THumanoid.MoveDirection,CFrame.Angles(math.rad(Angle), 0, 0))
+                task.wait()
+            else
+                FPos(TRootPart, CFrame.new(0, 1.5, THumanoid.WalkSpeed), CFrame.Angles(math.rad(90), 0, 0))
+                task.wait()
+                FPos(TRootPart, CFrame.new(0, -1.5, -THumanoid.WalkSpeed), CFrame.Angles(0, 0, 0))
+                task.wait()
+            end
+        else
+            break
+        end
+    until not TargetPlayer.Parent or not LocalPlayer.Character or tick() > Time + 2 or Humanoid.Health <= 0
+    
+    BV:Destroy()
+    Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
+    workspace.CurrentCamera.CameraSubject = Humanoid
+    workspace.FallenPartsDestroyHeight = -500
+    
+    RootPart.CFrame = OldPos
+    Character:PivotTo(OldPos)
+    RootPart.AssemblyLinearVelocity = Vector3.zero
+    RootPart.AssemblyAngularVelocity = Vector3.zero
+end
+
+-- // BUILD GUI DENGAN LOGO SYSTEM
+local ScreenGui = UI.Create("ScreenGui", {
+    Name = "ModernFlingUI_Logo",
+    Parent = CoreGui,
+    ResetOnSpawn = false
+})
+
+-- // LOGO BUTTON (Utama untuk drag dan toggle menu)
+local LogoButton = UI.Create("TextButton", {
+    Parent = ScreenGui,
+    Size = UDim2.new(0, 40, 0, 40),
+    Position = UDim2.new(0, 20, 0, 20),
+    BackgroundColor3 = Config.Theme.MainColor,
+    Text = "🎭",
+    TextSize = 24,
+    TextColor3 = Config.Theme.AccentColor,
+    Font = Enum.Font.GothamBold,
+    AutoButtonColor = false
+})
+
+local LogoCorner = UI.Create("UICorner", {
+    Parent = LogoButton,
+    CornerRadius = UDim.new(1, 0)
+})
+
+local LogoStroke = UI.Create("UIStroke", {
+    Parent = LogoButton,
+    Color = Config.Theme.AccentColor,
+    Thickness = 2
+})
+
+local LogoShadow = UI.Create("ImageLabel", {
+    Parent = LogoButton,
+    Size = UDim2.new(1, 10, 1, 10),
+    Position = UDim2.new(0, -5, 0, -5),
+    BackgroundTransparency = 1,
+    Image = "rbxassetid://5554236805",
+    ImageColor3 = Color3.new(0, 0, 0),
+    ImageTransparency = 0.6,
+    ScaleType = Enum.ScaleType.Slice,
+    SliceCenter = Rect.new(10, 10, 118, 118)
+})
+
+-- // MAIN MENU FRAME (Muncul di samping logo)
+local MenuFrame = UI.Create("Frame", {
+    Parent = ScreenGui,
+    Size = UDim2.new(0, 280, 0, 0), -- Start height 0 (hidden)
+    Position = UDim2.new(0, 70, 0, 20), -- Di samping kanan logo
+    BackgroundColor3 = Config.Theme.MainColor,
+    BorderSizePixel = 0,
+    ClipsDescendants = true,
+    Visible = false
+})
+
+local MenuCorner = UI.Create("UICorner", {
+    Parent = MenuFrame,
+    CornerRadius = UDim.new(0, 12)
+})
+
+local MenuStroke = UI.Create("UIStroke", {
+    Parent = MenuFrame,
+    Color = Config.Theme.SecondaryColor,
+    Thickness = 2
+})
+
+-- Title Bar Menu
+local MenuTitle = UI.Create("TextLabel", {
+    Parent = MenuFrame,
+    Size = UDim2.new(1, 0, 0, 40),
+    BackgroundTransparency = 1,
+    Text = "R-77 <font color=\"rgb(0,255,170)\">PREMIUM</font>",
+    RichText = true,
+    Font = Enum.Font.GothamBold,
+    TextSize = 18,
+    TextColor3 = Config.Theme.TextColor
+})
+
+local MenuCloseBtn = UI.Create("TextButton", {
+    Parent = MenuFrame,
+    Size = UDim2.new(0, 30, 0, 30),
+    Position = UDim2.new(1, -35, 0, 5),
+    BackgroundTransparency = 1,
+    Text = "×",
+    Font = Enum.Font.GothamMedium,
+    TextSize = 24,
+    TextColor3 = Color3.fromRGB(200, 50, 50)
+})
+
+-- Content Container
+local MenuContainer = UI.Create("Frame", {
+    Parent = MenuFrame,
+    Size = UDim2.new(1, -20, 1, -50),
+    Position = UDim2.new(0, 10, 0, 45),
+    BackgroundTransparency = 1
+})
+
+-- Input Box
+local InputBox = UI.Create("TextBox", {
+    Parent = MenuContainer,
+    Size = UDim2.new(1, 0, 0, 35),
+    BackgroundColor3 = Config.Theme.SecondaryColor,
+    Text = "",
+    PlaceholderText = "Target Name (All/Random)",
+    TextColor3 = Config.Theme.TextColor,
+    PlaceholderColor3 = Color3.fromRGB(150, 150, 150),
+    Font = Enum.Font.Gotham,
+    TextSize = 14
+})
+UI.Create("UICorner", {Parent = InputBox, CornerRadius = UDim.new(0, 8)})
+
+-- Buttons Grid
+local ButtonGrid = UI.Create("ScrollingFrame", {
+    Parent = MenuContainer,
+    Size = UDim2.new(1, 0, 0, 140),
+    Position = UDim2.new(0, 0, 0, 45),
+    BackgroundTransparency = 1,
+    ScrollBarThickness = 0,
+    CanvasSize = UDim2.new(0, 0, 0, 160)
+})
+
+local GridLayout = UI.Create("UIGridLayout", {
+    Parent = ButtonGrid,
+    CellSize = UDim2.new(0.48, 0, 0, 35),
+    CellPadding = UDim2.new(0.04, 0, 0, 10),
+    SortOrder = Enum.SortOrder.LayoutOrder
+})
+
+-- Function untuk membuat button
+local function CreateToggleBtn(text, callback)
+    local btn = UI.Create("TextButton", {
+        Parent = ButtonGrid,
+        BackgroundColor3 = Config.Theme.SecondaryColor,
+        Text = text,
+        TextColor3 = Config.Theme.TextColor,
+        Font = Enum.Font.GothamBold,
+        TextSize = 12
+    })
+    UI.Create("UICorner", {Parent = btn, CornerRadius = UDim.new(0, 8)})
+    UI.AnimateButton(btn)
+    
+    btn.MouseButton1Click:Connect(function()
+        local state = callback()
+        if state then
+            TweenService:Create(btn, TweenInfo.new(0.3), {
+                BackgroundColor3 = Config.Theme.AccentColor,
+                TextColor3 = Color3.new(0, 0, 0)
+            }):Play()
+        else
+            TweenService:Create(btn, TweenInfo.new(0.3), {
+                BackgroundColor3 = Config.Theme.SecondaryColor,
+                TextColor3 = Config.Theme.TextColor
+            }):Play()
+        end
+    end)
+    
+    return btn
+end
+
+local function CreateActionBtn(text, callback)
+    local btn = UI.Create("TextButton", {
+        Parent = ButtonGrid,
+        BackgroundColor3 = Config.Theme.SecondaryColor,
+        Text = text,
+        TextColor3 = Config.Theme.TextColor,
+        Font = Enum.Font.GothamBold,
+        TextSize = 12
+    })
+    UI.Create("UICorner", {Parent = btn, CornerRadius = UDim.new(0, 8)})
+    UI.AnimateButton(btn)
+    btn.MouseButton1Click:Connect(callback)
+    return btn
+end
+
+-- // ADD BUTTONS TO MENU
+CreateActionBtn("ATTACK TARGET", function()
+    local name = InputBox.Text
+    if name == "" then return Notify("Error", "Enter a name", 2) end
+    
+    local target = GetPlayer(name)
+    if AllBool then
+        for _, pl in next, Players:GetPlayers() do
+            if pl ~= LocalPlayer then
+                task.spawn(function() SkidFling(pl) end)
+            end
+        end
+        Notify("Attack", "Attacking All", 3)
+        AllBool = false
+    elseif target then
+        Notify("Attack", "Attacking " .. target.DisplayName, 3)
+        SkidFling(target)
+    else
+        Notify("Error", "Player not found", 2)
+    end
+end)
+
+local NoclipBtn = CreateToggleBtn("NOCLIP", function() 
+    toggleNoclip()
+    return noclipEnabled 
+end)
+
+local AntiFallBtn = CreateToggleBtn("ANTI-FALL (NDS)", function() 
+    toggleAntiFallDamage()
+    return antiFallEnabled 
+end)
+
+CreateActionBtn("RESET CHARACTER", function()
+    if LocalPlayer.Character then 
+        LocalPlayer.Character:BreakJoints() 
+        Notify("System", "Character Reset", 2)
+    end
+end)
+
+-- // ANIMATION FUNCTIONS
+local MenuOpen = false
+
+local function ToggleMenu()
+    MenuOpen = not MenuOpen
+    
+    if MenuOpen then
+        MenuFrame.Visible = true
+        TweenService:Create(MenuFrame, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+            Size = UDim2.new(0, 280, 0, 230)
+        }):Play()
+        
+        TweenService:Create(LogoButton, TweenInfo.new(0.3), {
+            BackgroundColor3 = Config.Theme.AccentColor,
+            TextColor3 = Color3.new(0, 0, 0)
+        }):Play()
+    else
+        TweenService:Create(MenuFrame, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+            Size = UDim2.new(0, 280, 0, 0)
+        }):Play()
+        
+        TweenService:Create(LogoButton, TweenInfo.new(0.3), {
+            BackgroundColor3 = Config.Theme.MainColor,
+            TextColor3 = Config.Theme.AccentColor
+        }):Play()
+        
+        task.wait(0.4)
+        MenuFrame.Visible = false
+    end
+end
+
+-- // DRAG SYSTEM UNTUK LOGO (MENU IKUT)
+local LogoDragging = false
+local LogoDragStart = Vector2.new(0, 0)
+local LogoStartPos = UDim2.new(0, 0, 0, 0)
+local MenuStartPos = UDim2.new(0, 0, 0, 0)
+
+LogoButton.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        LogoDragging = true
+        LogoDragStart = input.Position
+        LogoStartPos = LogoButton.Position
+        MenuStartPos = MenuFrame.Position
+        
+        -- Visual feedback saat drag
+        TweenService:Create(LogoButton, TweenInfo.new(0.1), {
+            Size = UDim2.new(0, 45, 0, 45)
+        }):Play()
+        
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                LogoDragging = false
+                TweenService:Create(LogoButton, TweenInfo.new(0.1), {
+                    Size = UDim2.new(0, 40, 0, 40)
+                }):Play()
+            end
+        end)
+    elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
+        -- Klik kanan untuk toggle menu
+        ToggleMenu()
+    end
+end)
+
+LogoButton.MouseButton2Click:Connect(ToggleMenu)
+
+UserInputService.InputChanged:Connect(function(input)
+    if LogoDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local delta = input.Position - LogoDragStart
+        
+        -- Pindahkan logo
+        local newLogoPos = UDim2.new(
+            LogoStartPos.X.Scale,
+            LogoStartPos.X.Offset + delta.X,
+            LogoStartPos.Y.Scale,
+            LogoStartPos.Y.Offset + delta.Y
+        )
+        LogoButton.Position = newLogoPos
+        
+        -- Pindahkan menu relatif ke logo
+        if MenuOpen then
+            local menuOffset = UDim2.new(0, 50, 0, 0) -- Jarak menu dari logo
+            MenuFrame.Position = UDim2.new(
+                newLogoPos.X.Scale,
+                newLogoPos.X.Offset + 50,
+                newLogoPos.Y.Scale,
+                newLogoPos.Y.Offset
+            )
+        end
+    end
+end)
+
+-- // LOGO INTERACTIONS
+LogoButton.MouseEnter:Connect(function()
+    if not LogoDragging then
+        TweenService:Create(LogoButton, TweenInfo.new(0.2), {
+            Size = UDim2.new(0, 45, 0, 45)
+        }):Play()
+    end
+end)
+
+LogoButton.MouseLeave:Connect(function()
+    if not LogoDragging then
+        TweenService:Create(LogoButton, TweenInfo.new(0.2), {
+            Size = UDim2.new(0, 40, 0, 40)
+        }):Play()
+    end
+end)
+
+-- // CLOSE BUTTON LOGIC
+MenuCloseBtn.MouseButton1Click:Connect(function()
+    ToggleMenu()
+end)
+
+-- // INITIAL NOTIFICATION
+Notify("Loaded", "🎭 R-77 Premium Fling | Right-click logo for menu", 5)
+
+-- // CLEANUP FUNCTION
+local function Cleanup()
+    if noclipConnection then noclipConnection:Disconnect() end
+    if antiFallConnection then antiFallConnection:Disconnect() end
+    ScreenGui:Destroy()
+end
+
+-- Auto-cleanup jika GUI dihapus
+ScreenGui.Destroying:Connect(Cleanup)
